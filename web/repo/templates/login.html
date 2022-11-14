@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% load widget_tweaks %}
+{% load static %}
+
+{% block title %} Login {% endblock %}
+
+{% block content %}
+<div class="container-fluid h-100">
+  <div class="row justify-content-center align-items-center h-50">
+    <div class="col col-sm-6 col-md-6 col-lg-4 col-xl-3">
+      <form role="form" method="POST">
+        {% csrf_token %}
+        <!-- Email input -->
+        <div class="row mb-4">
+          <img src="{% static 'openrepo_logo.svg' %}" alt="OpenRepo Logo" class="mx-auto d-block" width="70%">
+        </div>
+        <div class="form-outline mb-4">
+          <!-- <input type="email" id="form2Example1" class="form-control" /> -->
+          {{ form.username|append_attr:'placeholder:Username'|append_attr:"class:form-control" }}
+
+          <div>{{ form.username.errors }}</div>
+        </div>
+
+        <!-- Password input -->
+        <div class="form-outline mb-4">
+          {{ form.password|append_attr:'placeholder:Password'|append_attr:"class:form-control" }}
+          <div>{{ form.password.errors }}</div>
+        </div>
+
+        <!-- 2 column grid layout for inline styling -->
+        <div class="row mb-4">
+          <div class="col d-flex justify-content-center">
+
+            <span style="color: red">{{ form.non_field_errors }}</span>
+          </div>
+
+        </div>
+
+        <!-- Submit button -->
+        <button type="submit" style="background-color:rgb(98,0,238); border-color:(98,0,238)!" class="btn btn-primary btn-block mb-4">Sign in</button>
+
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
