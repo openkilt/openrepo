@@ -1,0 +1,74 @@
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+
+daemon off;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    sendfile on;
+    tcp_nopush on;
+    types_hash_max_size 2048;
+
+
+    keepalive_timeout  65;
+    access_log off;
+
+
+    server {
+        client_max_body_size 2048M;
+        client_body_buffer_size 64k;
+
+        listen 8080 default_server;
+        server_name _;
+
+        charset utf-8;    
+        index   index.html index.htm;
+
+        location = /health/ {
+          return 200;
+        }
+
+        # Frontend requests go to Vue.js dist
+        location = / {
+            root /app/frontend-dist;
+            # Always serve index.html for any request
+            try_files $uri $uri/ /index.html;
+        }
+        # Frontend requests go to Vue.js dist
+        location ~ ^(/index.html|/assets/|/cfg/|/favicon.ico) {
+            root /app/frontend-dist;
+            # Always serve index.html for any request
+            try_files $uri $uri/ /index.html;
+        }
+
+
+        # API requests go to Django
+        location ~ ^(/api/|/api-auth/|/static/|/admin/) {
+            proxy_pass_header Server;
+            proxy_set_header Host $http_host;
+            proxy_redirect off;
+            proxy_set_header X-Forwarded-For  $http_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+            proxy_set_header X-Scheme $http_x_forwarded_proto;
+            proxy_connect_timeout 120;
+            proxy_read_timeout 120;
+            proxy_send_timeout 120;
+            proxy_pass http://localhost:8000;
+        }
+
+        # All other requests (e.g., repo requests) go to repo static files
+        location ~ ^/ {
+            autoindex on;
+            root /var/lib/openrepo/www/;
+            #add_header Cache-Control "public, max-age=1800";
+        }
+    }
+
+}
