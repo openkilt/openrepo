@@ -204,7 +204,7 @@ STORAGE_FILENAME_LENGTH = 32
 # In case a repo creation gets frozen in bg worker, this will allow it to reattempt
 REPO_CREATE_TIMEOUT_SEC = 60*60*2
 
-REPO_WWW_PATH = '/var/www/openrepo/'
+REPO_WWW_PATH = '/var/lib/openrepo/www/'
 
 # Allow local overrides of settings for debug/dev
 try:
