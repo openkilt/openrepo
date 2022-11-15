@@ -13,4 +13,5 @@ pytz==2022.2.1
 requests==2.28.1
 rpmfile==1.0.8
 sqlparse==0.4.2
+tzdata==2022.6
 urllib3==1.26.11
