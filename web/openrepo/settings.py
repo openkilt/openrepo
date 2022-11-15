@@ -16,7 +16,15 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-OPENREPO_VAR_DIR = '/var/lib/openrepo/'
+# Allow local overrides of settings for debug/dev
+try:
+    from .settings_local import *
+except:
+    pass
+
+
+OPENREPO_VAR_DIR = os.getenv('OPENREPO_VAR_DIR', '/var/lib/openrepo/')
+DOMAIN_NAME = os.getenv("OPENREPO_DOMAIN", "localhost:8080")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -25,9 +33,14 @@ OPENREPO_VAR_DIR = '/var/lib/openrepo/'
 SECRET_KEY = 'django-insecure-s8-h-mhty&_oa)qouzm!_$8s3$yn_u4x$7q$gh7o66cd=3&o_h'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("OPENREPO_DEBUG", "FALSE").upper() == "TRUE"
 
-ALLOWED_HOSTS = []
+if os.getenv("OPENREPO_SECURE_HOSTS", "FALSE").upper() == "TRUE":
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', DOMAIN_NAME]
+else:
+    # For additional security, consider enabling this security feature
+    # https://security.stackexchange.com/questions/45687/what-does-djangos-allowed-hosts-variable-actually-do
+    ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -80,13 +93,28 @@ WSGI_APPLICATION = 'openrepo.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(OPENREPO_VAR_DIR, 'db.sqlite3'),
+db_type = os.getenv('OPENREPO_DB_TYPE', 'sqlite')
+if db_type == 'sqlite':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(OPENREPO_VAR_DIR, 'db.sqlite3'),
+        }
     }
-}
+elif db_type == 'postgresql':
 
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv("OPENREPO_PG_DATABASE", "openrepo"),
+            'USER': os.getenv("OPENREPO_PG_USERNAME", "postgres"),
+            'PASSWORD': os.getenv("OPENREPO_PG_PASSWORD", "postgres"),
+            'HOST': os.getenv("OPENREPO_PG_HOSTNAME", "localhost"),
+            'PORT': os.getenv("OPENREPO_PG_PORT", "5432"),
+        }
+    }
+else:
+    raise Exception(f"Cannot determine database to use for OPENREPO_DB_TYPE={db_type}")
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -128,16 +156,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+if DEBUG:
+    STATICFILES_DIRS = [
+        BASE_DIR / "static",
+    ]
+else:
+    STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-DOMAIN_NAME = 'localhost:8080'
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/admin/login/'
@@ -182,7 +212,7 @@ LOGGING = {
     'loggers': {
         'openrepo_web': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': os.getenv('OPENREPO_LOGLEVEL', 'INFO'),
             'propagate': True,
         },
         'django': {
@@ -207,9 +237,3 @@ STORAGE_FILENAME_LENGTH = 32
 # In case a repo creation gets frozen in bg worker, this will allow it to reattempt
 REPO_CREATE_TIMEOUT_SEC = 60*60*2
 
-
-# Allow local overrides of settings for debug/dev
-try:
-    from .settings_local import *
-except:
-    pass
