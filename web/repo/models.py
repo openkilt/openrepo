@@ -28,13 +28,6 @@ class Repository(models.Model):
         ('files', 'Generic Files')
     ]
 
-    REPO_ARCHITECTURES = [
-        ('x86_64', 'x86_64 Desktop'),
-        ('armhf', '32-bit armhf'),
-        ('aarch64', '64-bit arm'),
-        ('any', 'Any'),
-
-    ]
 
     class Meta:
         verbose_name_plural = "repositories"
@@ -48,7 +41,6 @@ class Repository(models.Model):
 
     # e.g., apt, rpm, simple, etc.
     repo_type = models.CharField(max_length=128, choices=REPO_TYPES, db_index=True)
-    architecture = models.CharField(max_length=128, choices=REPO_ARCHITECTURES, db_index=True)
 
     signing_key = models.ForeignKey(PGPSigningKey, blank=True, null=True, on_delete=models.SET_NULL)
     promote_to = models.ForeignKey("self", blank=True, null=True, on_delete=models.CASCADE)
@@ -82,6 +74,8 @@ class Package(models.Model):
 
     # The name of the package without the version string
     package_name = models.CharField(db_index=True, max_length=65536)
+
+    architecture = models.CharField(max_length=256, db_index=True)
 
     version = models.CharField(db_index=True, max_length=65536)
     build_date = models.DateTimeField(null=True, blank=True)

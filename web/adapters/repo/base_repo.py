@@ -49,7 +49,6 @@ class BaseRepoAdapter:
     def __init__(self, repo_db_obj):
 
         self.repo_uid = repo_db_obj.repo_uid
-        self.arch = repo_db_obj.architecture
         self.pgp_key = repo_db_obj.signing_key
 
         self.build = None

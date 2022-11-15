@@ -10,6 +10,7 @@ logger = logging.getLogger("openrepo_web")
 # Repo config looks like:
 # deb [arch=amd64 signed-by=/key.gpg2] http://172.17.0.1:9000/mytestrepo/amd64 stable mains
 
+DEB_ARCH_NAME = 'any'
 
 class DepRepoAdapter(BaseRepoAdapter):
 
@@ -18,7 +19,7 @@ class DepRepoAdapter(BaseRepoAdapter):
         dest_gpg_path = f'/usr/share/keyrings/openrepo-{self.repo_uid}.gpg'
 
         repo_address = f'curl {base_url}/public.gpg | gpg --dearmor -o {dest_gpg_path}\n'
-        repo_address += f'echo "deb [arch={self.arch} signed-by={dest_gpg_path}] {base_url}/ stable main" > /etc/apt/sources.list.d/openrepo-{self.repo_uid}.list\n'
+        repo_address += f'echo "deb [arch={DEB_ARCH_NAME} signed-by={dest_gpg_path}] {base_url}/ stable main" > /etc/apt/sources.list.d/openrepo-{self.repo_uid}.list\n'
         repo_address += 'apt update'
         return repo_address
 
@@ -30,7 +31,7 @@ class DepRepoAdapter(BaseRepoAdapter):
         directories = []
         for poolname in poolnames:
             directories.append(f'pool/{poolname}')
-            directories.append(f'dists/stable/{poolname}/binary-{self.arch}')
+            directories.append(f'dists/stable/{poolname}/binary-{DEB_ARCH_NAME}')
 
 
         for dirpath in directories:
@@ -42,7 +43,7 @@ class DepRepoAdapter(BaseRepoAdapter):
         release_conf =  f'APT::FTPArchive::Release::Codename "stable";' + "\n"
         release_conf += f'APT::FTPArchive::Release::Components "{all_pools}";' + "\n"
         release_conf += f'APT::FTPArchive::Release::Label "{self.repo_uid} APT Repository";' + "\n"
-        release_conf += f'APT::FTPArchive::Release::Architectures "{self.arch}";'
+        release_conf += f'APT::FTPArchive::Release::Architectures "{DEB_ARCH_NAME}";'
 
         with self._buildlog_section(f"Writing release.conf") as log_entry:
             release_conf_path = os.path.join(repo_path, 'release.conf')
@@ -58,15 +59,15 @@ class DepRepoAdapter(BaseRepoAdapter):
 
         aptftp_options = f'--db {settings.DEB_DB_PATH} -o APT::FTPArchive::AlwaysStat=true'
         for poolname in poolnames:
-            exec_commands.append(f'apt-ftparchive {aptftp_options} packages pool/{poolname} > dists/stable/{poolname}/binary-{self.arch}/Packages')
-            exec_commands.append(f'gzip -k dists/stable/{poolname}/binary-{self.arch}/Packages')
+            exec_commands.append(f'apt-ftparchive {aptftp_options} packages pool/{poolname} > dists/stable/{poolname}/binary-{DEB_ARCH_NAME}/Packages')
+            exec_commands.append(f'gzip -k dists/stable/{poolname}/binary-{DEB_ARCH_NAME}/Packages')
 
         for poolname in poolnames:
-            exec_commands.append(f'apt-ftparchive {aptftp_options} contents pool/{poolname} > dists/stable/{poolname}/Contents-{self.arch}')
-            exec_commands.append(f'gzip -k dists/stable/{poolname}/Contents-{self.arch}')
+            exec_commands.append(f'apt-ftparchive {aptftp_options} contents pool/{poolname} > dists/stable/{poolname}/Contents-{DEB_ARCH_NAME}')
+            exec_commands.append(f'gzip -k dists/stable/{poolname}/Contents-{DEB_ARCH_NAME}')
 
         for poolname in poolnames:
-            exec_commands.append(f'apt-ftparchive {aptftp_options} release dists/stable/{poolname}/binary-{self.arch} > dists/stable/{poolname}/binary-{self.arch}/Release')
+            exec_commands.append(f'apt-ftparchive {aptftp_options} release dists/stable/{poolname}/binary-{DEB_ARCH_NAME} > dists/stable/{poolname}/binary-{DEB_ARCH_NAME}/Release')
 
         exec_commands.append(f'apt-ftparchive {aptftp_options} release -c release.conf dists/stable > dists/stable/Release')
 

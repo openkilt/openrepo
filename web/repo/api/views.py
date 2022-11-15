@@ -282,6 +282,7 @@ class UploadViewSet(viewsets.ViewSet):
         package.upload_date = datetime.now(tz=pytz.utc)
         package.filename = filename
         package.build_date = file_info_adapter.get_builddate()
+        package.architecture = file_info_adapter.get_architecture()
         package.version = file_info_adapter.get_version()
         package.package_name = file_info_adapter.get_name()
         package.checksum_sha512 = sha512

@@ -64,7 +64,7 @@ class RepoDetailSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Repository
-        fields = ['href_packages', 'href_upload', 'repo_uid', 'repo_type', 'architecture', 'package_count', 'signing_key', 'keep_only_latest', 'last_updated', 'promote_to', 'repo_instructions', 'write_access']
+        fields = ['href_packages', 'href_upload', 'repo_uid', 'repo_type', 'package_count', 'signing_key', 'keep_only_latest', 'last_updated', 'promote_to', 'repo_instructions', 'write_access']
 
     def get_repo_instructions(self, obj):
         repo_adapter = get_repo_adapter(obj)
@@ -87,7 +87,7 @@ class PackageSummarySerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Package
-        fields = ['href_package', 'package_uid', 'package_name', 'filename', 'upload_date', 'version']
+        fields = ['href_package', 'package_uid', 'package_name', 'filename', 'architecture', 'upload_date', 'version']
 
 
 class PackageDetailSerializer(serializers.HyperlinkedModelSerializer):
@@ -95,7 +95,7 @@ class PackageDetailSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Package
-        fields = ['package_uid', 'repo_uid', 'filename', 'version', 'checksum_sha512', 'build_date', 'upload_date']
+        fields = ['package_uid', 'repo_uid', 'filename', 'version', 'architecture', 'checksum_sha512', 'build_date', 'upload_date']
 
 
 class CopySerializer(serializers.Serializer):
