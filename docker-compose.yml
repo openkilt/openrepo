@@ -13,9 +13,31 @@ services:
     command: run_openrepoweb
     volumes:
         - ./openrepo-data:/var/lib/openrepo
+    environment:
+      - OPENREPO_DB_TYPE=postgresql
+      - OPENREPO_PG_DATABASE=openrepo
+      - OPENREPO_PG_USERNAME=postgres
+      - OPENREPO_PG_PASSWORD=postgres
+      - OPENREPO_PG_HOSTNAME=db
 
   worker:
     image: openrepo/server:latest
     command: ./django/manage.py runworker
     volumes:
         - ./openrepo-data:/var/lib/openrepo
+    environment:
+      - OPENREPO_DB_TYPE=postgresql
+      - OPENREPO_PG_DATABASE=openrepo
+      - OPENREPO_PG_USERNAME=postgres
+      - OPENREPO_PG_PASSWORD=postgres
+      - OPENREPO_PG_HOSTNAME=db
+  db:
+    image: postgres:15.1
+    expose:
+      - "5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=openrepo
+    volumes:
+      - ./openrepo-data/postgres:/var/lib/postgresql/data
