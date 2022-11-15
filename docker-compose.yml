@@ -5,6 +5,9 @@ services:
     command: nginx
     ports:
       - "7376:8080"
+    depends_on:
+      - "django"
+
 
   django:
     image: openrepo/server:latest
@@ -12,25 +15,33 @@ services:
       - "8000"
     command: run_openrepoweb
     volumes:
-        - ./openrepo-data:/var/lib/openrepo
+      - ./openrepo-data:/var/lib/openrepo
     environment:
+      - OPENREPO_DOMAIN=yourdomain.com
       - OPENREPO_DB_TYPE=postgresql
       - OPENREPO_PG_DATABASE=openrepo
       - OPENREPO_PG_USERNAME=postgres
       - OPENREPO_PG_PASSWORD=postgres
       - OPENREPO_PG_HOSTNAME=db
+    depends_on:
+      - "db"
+
 
   worker:
     image: openrepo/server:latest
     command: ./django/manage.py runworker
     volumes:
-        - ./openrepo-data:/var/lib/openrepo
+      - ./openrepo-data:/var/lib/openrepo
     environment:
       - OPENREPO_DB_TYPE=postgresql
       - OPENREPO_PG_DATABASE=openrepo
       - OPENREPO_PG_USERNAME=postgres
       - OPENREPO_PG_PASSWORD=postgres
       - OPENREPO_PG_HOSTNAME=db
+    depends_on:
+      - "django"
+
+
   db:
     image: postgres:15.1
     expose:
