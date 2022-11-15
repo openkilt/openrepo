@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # Start by running any db migrations if needed
-/app/django/manage.py migrate
+# Retry repeatedly in case, for example, db is not up yet
+until /app/django/manage.py migrate
+do
+	echo "Migrate failed.  Retrying"
+	sleep 1
+done
 
 cd /app/django/
 gunicorn openrepo.wsgi --worker-class gevent -t 240 -w 2 -b 0.0.0.0:8000
