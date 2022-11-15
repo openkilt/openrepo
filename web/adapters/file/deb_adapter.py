@@ -24,7 +24,7 @@ class DebFileAdapter(RepoFileAdapter):
         return self.pkgname
 
     def get_architecture(self):
-        return self.archtecture
+        return self.architecture
 
     def get_version(self):
         return self.version
