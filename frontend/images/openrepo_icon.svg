@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   id="svg69"
+   width="221"
+   height="221"
+   viewBox="0 0 221 221"
+   sodipodi:docname="openrepo_icon.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs73" />
+  <sodipodi:namedview
+     id="namedview71"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     width="764px"
+     inkscape:zoom="1.0500305"
+     inkscape:cx="163.32859"
+     inkscape:cy="77.140619"
+     inkscape:window-width="1667"
+     inkscape:window-height="1056"
+     inkscape:window-x="253"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g75" />
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="Image"
+     id="g75">
+    <path
+       id="rect14803"
+       style="color:#000000;fill:#f57f17;fill-opacity:1;stroke:#f57f17;stroke-width:17.5999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       d="m 17.725506,35.710575 a 2.1989335,2.4284367 0 0 0 -2.199598,2.427718 v 35.583255 h 4.397887 V 40.566012 H 200.14876 V 182.26008 H 19.923795 V 149.106 h -4.397887 v 35.58326 a 2.1989335,2.4284367 0 0 0 2.199598,2.4277 H 202.34705 a 2.1989335,2.4284367 0 0 0 2.1996,-2.4277 V 38.138293 a 2.1989335,2.4284367 0 0 0 -2.1996,-2.427718 z" />
+  </g>
+</svg>

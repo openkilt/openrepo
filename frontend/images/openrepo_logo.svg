@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   id="svg69"
+   width="563"
+   height="221"
+   viewBox="0 0 563 221"
+   sodipodi:docname="openrepo_logo.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs73" />
+  <sodipodi:namedview
+     id="namedview71"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     width="764px"
+     inkscape:zoom="0.74248366"
+     inkscape:cx="288.89525"
+     inkscape:cy="57.913732"
+     inkscape:window-width="1667"
+     inkscape:window-height="1056"
+     inkscape:window-x="253"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g75" />
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="Image"
+     id="g75">
+    <g
+       id="g20748"
+       transform="translate(-105.17542,-35.863311)">
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:96px;line-height:125%;font-family:sans-serif;letter-spacing:3px;word-spacing:0px;fill:#f57f17;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         x="137.80318"
+         y="170.51172"
+         id="text1599"><tspan
+           sodipodi:role="line"
+           id="tspan1597"
+           x="137.80318"
+           y="170.51172"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:96px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#f57f17;fill-opacity:1"
+           dx="-25">OpenRepo</tspan></text>
+      <path
+         id="rect14803"
+         style="color:#000000;fill:#f57f17;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none"
+         d="m 377.89062,43.283203 a 3.2587759,3.2587759 0 0 0 -3.25976,3.257813 v 47.75 h 6.51758 V 49.798828 H 648.23828 V 239.94141 H 381.14844 v -44.49024 h -6.51758 v 47.75 a 3.2587759,3.2587759 0 0 0 3.25976,3.25781 h 273.60547 a 3.2587759,3.2587759 0 0 0 3.25977,-3.25781 V 46.541016 a 3.2587759,3.2587759 0 0 0 -3.25977,-3.257813 z" />
+    </g>
+  </g>
+</svg>
