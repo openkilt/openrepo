@@ -207,6 +207,10 @@ class CopyViewSet(viewsets.ViewSet):
         package.repo = dst_repo
         package.save()
 
+        if dst_repo.keep_only_latest:
+            # Delete all older versions of this package if "keep only latest" is set
+            Package.objects.filter(repo=dst_repo, package_name=package.package_name).exclude(pk=package.pk).delete()
+
         serializer = PackageDetailSerializer(package)
         response = serializer.data
 
@@ -287,6 +291,10 @@ class UploadViewSet(viewsets.ViewSet):
         package.package_name = file_info_adapter.get_name()
         package.checksum_sha512 = sha512
         package.save()
+
+        if repo.keep_only_latest:
+            # Delete all older versions of this package if "keep only latest" is set
+            Package.objects.filter(repo=repo, package_name=package.package_name).exclude(pk=package.pk).delete()
 
         serializer = PackageDetailSerializer(package)
         response = serializer.data
