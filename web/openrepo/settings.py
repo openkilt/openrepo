@@ -16,6 +16,7 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+OPENREPO_VAR_DIR = '/var/lib/openrepo/'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -82,7 +83,7 @@ WSGI_APPLICATION = 'openrepo.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.path.join(OPENREPO_VAR_DIR, 'db.sqlite3'),
     }
 }
 
@@ -192,10 +193,12 @@ LOGGING = {
 }
 
 
-STORAGE_PATH = '/var/lib/openrepo/packages/'
-DEB_DB_PATH = '/var/lib/openrepo/debcache.db'
-RPM_CACHE_DIR = '/var/lib/openrepo/rpmcache/'
-KEYRING_PATH = '/var/lib/openrepo/keyring/'
+STORAGE_PATH = os.path.join(OPENREPO_VAR_DIR, 'packages/')
+DEB_DB_PATH = os.path.join(OPENREPO_VAR_DIR, 'debcache.db')
+RPM_CACHE_DIR = os.path.join(OPENREPO_VAR_DIR, 'rpmcache/')
+KEYRING_PATH = os.path.join(OPENREPO_VAR_DIR, 'keyring/')
+REPO_WWW_PATH = os.path.join(OPENREPO_VAR_DIR, 'www/')
+
 # The character length of the folder prefix for storing files (e.g., a prefix of two would yield aa, ab, ac, etc)
 STORAGE_PREFIX_DEPTH = 2
 # The character length of the package files stored on disk
@@ -204,7 +207,6 @@ STORAGE_FILENAME_LENGTH = 32
 # In case a repo creation gets frozen in bg worker, this will allow it to reattempt
 REPO_CREATE_TIMEOUT_SEC = 60*60*2
 
-REPO_WWW_PATH = '/var/lib/openrepo/www/'
 
 # Allow local overrides of settings for debug/dev
 try:
