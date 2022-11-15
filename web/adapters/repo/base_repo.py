@@ -211,7 +211,7 @@ class BaseRepoAdapter:
                     if os.path.exists(repo_uid_symlink):
                         os.unlink(repo_uid_symlink)
 
-                    os.symlink(dest_dir, repo_uid_symlink)
+                    os.symlink(dirname, repo_uid_symlink)
 
                 with self._buildlog_section(f"Cleaning old directories in {settings.REPO_WWW_PATH}") as log_entry:
                     self._clean_old_dirs(dirname)
