@@ -16,6 +16,18 @@
 
             </v-col>
         </v-layout>
+        <v-layout row v-if="repos.length == 0">
+          <v-col cols="12">
+
+            <v-alert
+              density="compact"
+              type="info"
+            >
+              No repositories have been created yet.  Click the "+" button to create a new repo.
+            </v-alert>
+
+          </v-col>
+        </v-layout>
         <v-card :to="'/cfg/repo/' + repo.repo_uid" flat v-for="repo in repos" :key="repo.repo_uid">
 
             
