@@ -98,15 +98,19 @@
 
             <v-layout class="font-weight-bold" row wrap>
 
-                <v-col cols="5">
+                <v-col cols="4">
                     <div>Package Name</div>
                 </v-col>
 
-                <v-col  align="left" cols="4">
+                <v-col  align="left" cols="3">
                     <div>Version</div>
                 </v-col>
 
-                <v-col  align="right" cols="3">
+                <v-col  align="left" cols="3">
+                    <div>Architecture</div>
+                </v-col>
+
+                <v-col  align="right" cols="2">
                     <div>Upload Date</div>
                 </v-col>
 
@@ -117,7 +121,7 @@
 
             <v-layout row wrap class="package" 
                     :class="pkg.promotable ? 'promotable' : 'not-promotable'">
-                <v-col  class="text-left  " cols="5">
+                <v-col  class="text-left  " cols="4">
 
                     <v-checkbox-btn inline
                     density="compact"
@@ -130,10 +134,13 @@
 
                 </v-col>
 
-                <v-col  align="left" cols="4">
+                <v-col  align="left" cols="3">
                     <div>{{ pkg.version }}</div>
                 </v-col>
-                <v-col  align="right" cols="3">
+                <v-col  align="left" cols="3">
+                    <div>{{ pkg.architecture }}</div>
+                </v-col>
+                <v-col  align="right" cols="2">
                     <div>{{ this.format_date(pkg.upload_date )}}</div>
                 </v-col>
             </v-layout>

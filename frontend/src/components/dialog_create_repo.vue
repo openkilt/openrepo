@@ -33,16 +33,6 @@
                         single-line
                         ></v-select>
 
-                        <v-select
-                        v-model="repo.architecture"
-                        :items="option_repo_architectures"
-                        :error-messages="repo_error_response.architecture"
-                        item-title="text"
-                        item-value="value"
-                        label="Select"
-                        persistent-hint
-                        single-line
-                    ></v-select>
                 </v-col>
                 </v-row>
 
@@ -93,13 +83,11 @@
             repo: {
                 repo_uid: "",
                 repo_type: "deb",
-                architecture: "any",
                 signing_key: ""
             },
             repo_error_response: {
                 repo_uid: "",
                 repo_type: "",
-                architecture: ""
             },
             all_pgp_keys: [ ],
             //option_repo_type: { text: 'Debian/APT', value: 'deb' },
@@ -108,12 +96,6 @@
                 { text: 'Red Hat/RPM', value: 'rpm' },
                 { text: 'Generic Files', value: 'files' },
             ],
-            option_repo_architectures: [
-                { text: 'Any', value: 'any' },
-                { text: 'X86/64 Desktop', value: 'x86_64' },
-                { text: '32-bit Arm', value: 'armhf' },
-                { text: '64-bit Arm', value: 'aarch64' },
-            ],
             //submitted: false
         };
     },
@@ -121,7 +103,6 @@
         resetDialog() {
             this.repo_uid = ''
             this.repo_type = 'deb'
-            this.architecture = 'any'
             this.signing_key = ''
         },
         loadPgpKeys() {
@@ -149,7 +130,6 @@
             var data = {
                 repo_uid: this.repo.repo_uid,
                 repo_type: this.repo.repo_type,
-                architecture: this.repo.architecture,
                 signing_key: this.repo.signing_key
             };
 
