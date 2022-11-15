@@ -48,9 +48,13 @@ http {
             try_files $uri $uri/ /index.html;
         }
 
+        # Nginx to serve Django static files directly
+        location ~ ^/static/ {
+            root /app/django/;
+        }
 
         # API requests go to Django
-        location ~ ^(/api/|/api-auth/|/static/|/admin/) {
+        location ~ ^(/api/|/api-auth/|/admin/) {
             proxy_pass_header Server;
             proxy_set_header Host $http_host;
             proxy_redirect off;
