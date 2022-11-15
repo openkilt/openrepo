@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  nginx:
+    image: openrepo/server:latest
+    command: nginx
+    ports:
+      - "7376:8080"
+
+  django:
+    image: openrepo/server:latest
+    expose:
+      - "8000"
+    command: run_openrepoweb
+    volumes:
+        - ./openrepo-data:/var/lib/openrepo
+
+  worker:
+    image: openrepo/server:latest
+    command: ./django/manage.py runworker
+    volumes:
+        - ./openrepo-data:/var/lib/openrepo

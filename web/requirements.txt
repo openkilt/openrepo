@@ -3,6 +3,8 @@ djangorestframework==3.13.1
 django-filter==22.1
 django-widget-tweaks==1.4.12
 gnupg==2.3.1
+gevent==22.10.2
+gunicorn==20.1.0
 Markdown==3.4.1
 python-apt @ git+https://salsa.debian.org/apt-team/python-apt.git@6145b6484d220685edfd922d364afbf065127efe
 python-dateutil==2.8.2

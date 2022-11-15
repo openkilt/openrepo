@@ -1,0 +1,5 @@
+/**/venv3/
+/**/node_modules/
+openrepo-data/
+/**/db.sqlite3
+/**/settings_local.py
