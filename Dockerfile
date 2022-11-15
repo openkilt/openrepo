@@ -44,6 +44,7 @@ COPY web ./django
 COPY deploy/nginx/nginx.conf.prod /etc/nginx/nginx.conf
 COPY deploy/run_openrepoweb /usr/bin/
 
+RUN ./django/manage.py collectstatic --noinput
 
 #CMD ["/usr/bin/run_openrepoweb"]
 #EXPOSE 8000
