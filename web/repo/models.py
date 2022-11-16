@@ -56,7 +56,7 @@ class Repository(models.Model):
     # e.g., apt, rpm, simple, etc.
     repo_type = models.CharField(max_length=128, choices=REPO_TYPES, db_index=True)
 
-    signing_key = models.ForeignKey(PGPSigningKey, blank=True, null=True, on_delete=models.SET_NULL)
+    signing_key = models.ForeignKey(PGPSigningKey, blank=True, null=True, on_delete=models.PROTECT)
     promote_to = models.ForeignKey("self", blank=True, null=True, on_delete=models.CASCADE)
 
     # When a newer package of the same name is uploaded, delete the older versions

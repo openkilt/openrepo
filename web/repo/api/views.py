@@ -93,6 +93,15 @@ class PGPKeysViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
 
+        referencing_repos = Repository.objects.filter(signing_key=instance)
+        if len(referencing_repos) > 0:
+            repos = []
+            for repo in referencing_repos:
+                repos.append(repo.repo_uid)
+            return Response(status=rest_framework.status.HTTP_400_BAD_REQUEST, data = {
+                'detail': 'Unable to delete.  You must first remove this key from repos: ' + ", ".join(repos)
+            })
+
         keyring = PGPKeyring()
         keyring.delete(instance.fingerprint)
 
