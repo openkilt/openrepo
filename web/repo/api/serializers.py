@@ -88,6 +88,10 @@ class RepoDetailSerializer(serializers.HyperlinkedModelSerializer):
         disallowed_names = ["back", "api", "admin", "api-auth", "static"]
         if attrs['repo_uid'] in disallowed_names:
             raise serializers.ValidationError({'repo_uid': "Repo UID cannot be any of the following special words: " + ", ".join(disallowed_names)})
+
+        if attrs['signing_key'] is None or attrs['signing_key'] == '':
+            raise serializers.ValidationError({'signing_key': "Signing key is required"})
+
         return attrs
 
 class PackageSummarySerializer(serializers.HyperlinkedModelSerializer):
