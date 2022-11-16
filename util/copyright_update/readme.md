@@ -1,0 +1,4 @@
+Updates copyright headers on all source code
+
+Uses this utility:
+https://github.com/google/addlicense
