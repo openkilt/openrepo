@@ -33,6 +33,7 @@ WORKDIR /app
 # Copy the requirements.txt first and install dependencies, so that this can be cached
 COPY web/requirements.txt ./django/requirements.txt
 RUN ln -s /usr/bin/python3 /usr/bin/python && \
+    ln -s /usr/bin/createrepo_c /usr/bin/createrepo && \
     pip3 install --no-cache-dir -r django/requirements.txt && \
     mkdir -p /var/lib/openrepo/packages/
 
