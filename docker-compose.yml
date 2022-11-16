@@ -7,6 +7,9 @@ services:
       - "7376:8080"
     depends_on:
       - "django"
+    volumes:
+      - ./openrepo-data:/var/lib/openrepo
+
 
 
   django:
