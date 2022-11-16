@@ -34,14 +34,6 @@ class RepoSummarySerializer(serializers.HyperlinkedModelSerializer):
     href_packages = ParameterisedHyperlinkedIdentityField(view_name='package-list', lookup_fields=([ ('repo_uid', 'repo_uid')]),
                                                 read_only=True)
 
-    def validate_repo_uid(self, value):
-        # These are special names used by the Web UI.  Repos using these names would not work correctly because
-        # the URLs would not route to the repository
-        disallowed_names = ["back", "api", "admin", "api-auth", "static"]
-
-        if value in disallowed_names:
-            raise serializers.ValidationError("Repo UID cannot be any of the following special words: " + ", ".join(disallowed_names))
-
     class Meta:
         model = Repository
         fields = ['href_repo', 'href_packages', 'repo_uid', 'repo_type', 'package_count', 'last_updated']
@@ -93,6 +85,9 @@ class RepoDetailSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError(
                 {'repo_uid': 'repo_uid may only contain alphanumeric characters, dashes, and underscores'})
 
+        disallowed_names = ["back", "api", "admin", "api-auth", "static"]
+        if attrs['repo_uid'] in disallowed_names:
+            raise serializers.ValidationError({'repo_uid': "Repo UID cannot be any of the following special words: " + ", ".join(disallowed_names)})
         return attrs
 
 class PackageSummarySerializer(serializers.HyperlinkedModelSerializer):
