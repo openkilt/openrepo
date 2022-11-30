@@ -20,7 +20,7 @@ from datetime import datetime
 from rest_framework.response import Response
 from .filters import BuildFilter, BuildLogFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from .serializers import UserSerializer, RepoSummarySerializer, \
+from .serializers import UserSerializer, UserDetailSerializer, RepoSummarySerializer, \
                         PackageSummarySerializer, RepoDetailSerializer, PackageDetailSerializer, \
                         UploadSerializer, PGPKeySerializer, CopySerializer, BuildSerializer, BuildLogSerializer
 from repo.storage.filemanager import RepoFileManager
@@ -109,7 +109,7 @@ class PGPKeysViewSet(viewsets.ModelViewSet):
         return Response(status=rest_framework.status.HTTP_204_NO_CONTENT)
 
 class WhoAmIViewSet(rest_framework.mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    serializer_class = UserSerializer
+    serializer_class = UserDetailSerializer
 
     def get_object(self):
         return self.request.user

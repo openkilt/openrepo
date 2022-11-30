@@ -20,13 +20,18 @@ from .util import ParameterisedHyperlinkedIdentityField
 import string
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ['href', 'username', 'is_superuser', 'email']
+
+class UserDetailSerializer(serializers.HyperlinkedModelSerializer):
     api_key = serializers.StringRelatedField(source='auth_token', read_only=True, many=False)
 
 
     class Meta:
         model = User
         fields = ['href', 'username', 'is_superuser', 'email', 'api_key']
-
 
 class RepoSummarySerializer(serializers.HyperlinkedModelSerializer):
     href_repo = ParameterisedHyperlinkedIdentityField(view_name='repo-detail', lookup_fields=([ ('repo_uid', 'repo_uid')]),
