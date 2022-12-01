@@ -4,11 +4,12 @@ pid /tmp/nginx_dev.pid;
 daemon off;
 
 
+error_log /dev/stdout info;
+
 events {
     worker_connections 1024;
 }
 
-    error_log /dev/stdout info;
 http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
@@ -75,7 +76,7 @@ http {
         # All other requests (e.g., repo requests) go to repo static files
         location ~ ^/ {
             autoindex on;
-            root /tmp/openrepo-www/;
+            root /var/tmp/openrepo/www/;
             #add_header Cache-Control "public, max-age=1800";
         }
     }
