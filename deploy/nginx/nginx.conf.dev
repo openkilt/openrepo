@@ -60,7 +60,7 @@ http {
 
 
         # API requests go to Django
-        location ~ ^(/api/|/api-auth/|/static/|/admin/) {
+        location ~ ^(/api/|/api-auth/|/back|/static/|/admin/) {
             proxy_pass_header Server;
             proxy_set_header Host $http_host;
             proxy_redirect off;
