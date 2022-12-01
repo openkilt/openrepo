@@ -67,6 +67,8 @@ class BaseRepoAdapter:
 
         self.build = None
         self.log_number = 0
+        # The <origin> tab will get swapped out in JavaScript by the browser
+        self.base_url = f'<origin>/{self.repo_uid}'
 
 
 

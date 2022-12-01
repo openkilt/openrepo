@@ -18,8 +18,7 @@ from django.conf import settings
 
 class GenericRepoAdapter(BaseRepoAdapter):
     def _get_repo_instructions(self):
-        base_url = f'http://{settings.DOMAIN_NAME}/{self.repo_uid}/'
-        return f'{base_url}'
+        return f'{self.base_url}'
 
 
     def _generate_repo_structure(self, repo_path):

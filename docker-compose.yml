@@ -20,7 +20,6 @@ services:
     volumes:
       - ./openrepo-data:/var/lib/openrepo
     environment:
-      - OPENREPO_DOMAIN=yourdomain.com
       - OPENREPO_DB_TYPE=postgresql
       - OPENREPO_PG_DATABASE=openrepo
       - OPENREPO_PG_USERNAME=postgres

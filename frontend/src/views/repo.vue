@@ -217,6 +217,8 @@ export default {
             RepoDataService.get(this.repo_uid)
             .then(response => {
                 this.repo_details = response.data;
+                // Swap out special <origin> tag in repo instructions with window.location.origin
+                this.repo_details.repo_instructions = this.repo_details.repo_instructions.replaceAll("<origin>", window.location.origin);
                 // Check if the list of write_access usernames matches current user
                 this.is_readonly = !this.is_superuser && this.repo_details.write_access.indexOf(this.username) === -1;
 

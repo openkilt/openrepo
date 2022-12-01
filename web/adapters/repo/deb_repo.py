@@ -29,12 +29,11 @@ DEB_ARCH_NAME = 'any'
 class DepRepoAdapter(BaseRepoAdapter):
 
     def _get_repo_instructions(self):
-        base_url = f'http://{settings.DOMAIN_NAME}/{self.repo_uid}'
         dest_gpg_path = f'/usr/share/keyrings/openrepo-{self.repo_uid}.gpg'
 
-        repo_address = f'apt update && apt install -y curl gpg\n'
-        repo_address += f'curl {base_url}/public.gpg | gpg --dearmor -o {dest_gpg_path}\n'
-        repo_address += f'echo "deb [arch={DEB_ARCH_NAME} signed-by={dest_gpg_path}] {base_url}/ stable main" > /etc/apt/sources.list.d/openrepo-{self.repo_uid}.list\n'
+        repo_address = f'apt update && apt install -y curl gnupg\n'
+        repo_address += f'curl {self.base_url}/public.gpg | gpg --yes --dearmor -o {dest_gpg_path}\n'
+        repo_address += f'echo "deb [arch={DEB_ARCH_NAME} signed-by={dest_gpg_path}] {self.base_url}/ stable main" > /etc/apt/sources.list.d/openrepo-{self.repo_uid}.list\n'
         repo_address += 'apt update'
         return repo_address
 

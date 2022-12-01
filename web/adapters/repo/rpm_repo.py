@@ -18,15 +18,14 @@ import os
 
 class RpmRepoAdapter(BaseRepoAdapter):
     def _get_repo_instructions(self):
-        base_url = f'http://{settings.DOMAIN_NAME}/{self.repo_uid}/'
         repo_cfg_file = f'/etc/yum.repos.d/{self.repo_uid}.repo'
         repo_instr = f'echo """\n'
         repo_instr += f'[{self.repo_uid}]\n'
         repo_instr += f'name={self.repo_uid}\n'
-        repo_instr += f'baseurl={base_url}\n'
+        repo_instr += f'baseurl={self.base_url}\n'
         repo_instr += f'enabled=1\n'
         repo_instr += f'repo_gpgcheck=1\n'
-        repo_instr += f'gpgkey={base_url}public.gpg\n'
+        repo_instr += f'gpgkey={self.base_url}/public.gpg\n'
         repo_instr += f'""" > {repo_cfg_file}'
 
         return repo_instr
