@@ -1,14 +1,14 @@
 # Start with a node.js build image to compile the vue.js app distributables
 FROM node:18.11.0 AS vuebuilder
 
-WORKDIR /build/reposio/
+WORKDIR /build/openrepo/
 
 COPY frontend/ ./
 
 RUN npm install && \
     npm run build
 
-# Web app is compiled now to /build/reposio/dist/
+# Web app is compiled now to /build/openrepo/dist/
 
 
 # Now build the production image
@@ -38,7 +38,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python && \
     mkdir -p /var/lib/openrepo/packages/
 
 # Copy compiled vue app
-COPY --from=vuebuilder /build/reposio/dist ./frontend-dist/
+COPY --from=vuebuilder /build/openrepo/dist ./frontend-dist/
 
 # Copy Django app and configuration
 COPY web ./django
