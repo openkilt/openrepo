@@ -51,7 +51,7 @@ class OutputFormatter:
             self._tabular(fields, data['results'], sortby='repo_uid')
 
         elif operation == 'list_packages':
-            fields = ['package_name', 'filename', 'version', 'upload_date', 'package_uid']
+            fields = ['package_name', 'filename', 'version', 'architecture', 'upload_date', 'package_uid']
             self._tabular(fields, data['results'], sortby='package_name')
 
         elif operation == 'list_signingkeys':
