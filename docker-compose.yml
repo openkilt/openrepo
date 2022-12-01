@@ -1,8 +1,9 @@
 version: "3.9"
 services:
   nginx:
-    image: openrepo/server:latest
+    image: openkilt/openrepo:latest
     command: nginx
+    restart: unless-stopped
     ports:
       - "7376:8080"
     depends_on:
@@ -13,10 +14,11 @@ services:
 
 
   django:
-    image: openrepo/server:latest
+    image: openkilt/openrepo:latest
     expose:
       - "8000"
     command: run_openrepoweb
+    restart: unless-stopped
     volumes:
       - ./openrepo-data:/var/lib/openrepo
     environment:
@@ -30,10 +32,11 @@ services:
 
 
   worker:
-    image: openrepo/server:latest
+    image: openkilt/openrepo:latest
     command: ./django/manage.py runworker
     volumes:
       - ./openrepo-data:/var/lib/openrepo
+    restart: unless-stopped
     environment:
       - OPENREPO_DB_TYPE=postgresql
       - OPENREPO_PG_DATABASE=openrepo
@@ -48,6 +51,7 @@ services:
     image: postgres:15.1
     expose:
       - "5432"
+    restart: unless-stopped
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
