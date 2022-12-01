@@ -248,14 +248,18 @@ export default {
 
             pkgs_promote.forEach(pkg => {
                 try {
+                    let cur_ver = semver.coerce(pkg.version, true);
+                    if (cur_ver == null)
+                        return;
+                        
                     if (highest_promotes[pkg.package_name] === undefined)
                     {
-                        highest_promotes[pkg.package_name] = pkg.version;
+                        highest_promotes[pkg.package_name] = cur_ver;
                     } 
                     // If this pkg is > version than the one in the dictionary, use this instead
-                    if (semver.gt(pkg.version, highest_promotes[pkg.package_name]))
+                    if (semver.gt(cur_ver, highest_promotes[pkg.package_name], true))
                     {
-                        highest_promotes[pkg.package_name] = pkg.version;
+                        highest_promotes[pkg.package_name] = cur_ver;
                     }
                 } catch (error)
                 {
@@ -264,8 +268,9 @@ export default {
             }, this)
 
             pkgs_here.forEach(pkg => {
+                let cur_ver = semver.coerce(pkg.version, true);
                 if (highest_promotes[pkg.package_name] === undefined || 
-                    semver.gt(pkg.version, highest_promotes[pkg.package_name]))
+                    semver.gt(cur_ver, highest_promotes[pkg.package_name], true))
                 {
                     // Package does not exist in promote repo, OR
                     // the package in this repo is higher version than promotable
