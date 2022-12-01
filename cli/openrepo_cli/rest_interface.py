@@ -143,7 +143,7 @@ class RestInterface:
         auth_header = {'Authorization': f'Token {self.api_key}'}
         try:
             logger.debug(f"Making {method} request to {url}")
-            resp = requests.request(method, url, files=files, data=postdata, headers=auth_header)
+            resp = requests.request(method, url, files=files, data=postdata, headers=auth_header, timeout=60)
             logger.debug(f"Received {resp.status_code} response")
             logger.debug(f"Content: {resp.content}")
             if resp.status_code == 401:
