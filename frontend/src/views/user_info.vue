@@ -39,10 +39,10 @@
               <div>
                 <strong>API Key:</strong> <span>{{user_info.api_key}}</span>
 
-                <v-dialog v-model="dialog_instructions" max-width="600">
+                <v-dialog v-model="dialog_instructions_api" max-width="800">
                     <template v-slot:activator="{ props }">
                         <v-btn v-bind="props" variant="text" icon color="primary">
-                            <v-icon>mdi-information-outline</v-icon>
+                            <v-icon>mdi-api</v-icon>
                             <v-tooltip activator="parent" location="top">Repo Instruction</v-tooltip>
                         </v-btn>
                     </template>
@@ -53,19 +53,49 @@
                         <v-card-text>
                           <div>
                             All repo operations available in the Web UI are also available via REST API.  Below is an example using 
-                          curl to grab user information using your user account's unique authentication Token:
+                          curl to list all repositories using your user account's unique authentication Token:
 
                         </div>
 
-                            <pre class="block bg-grey-darken-4 text-grey-lighten-3 pa-5 whitespace-pre overflow-auto">{{user_info.instructions}}</pre>
+                            <pre class="block bg-grey-darken-4 text-grey-lighten-3 pa-5 whitespace-pre overflow-auto">{{user_info.instructions_api}}</pre>
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
-                            <v-btn color="green darken-1" @click="copyCurlInstructionsToClipboard();" text>Copy to Clipboard</v-btn>
-                            <v-btn color="green darken-1" @click="dialog_instructions = false;" text>Close</v-btn>
+                            <v-btn color="green darken-1" @click="copyInstructionsToClipboard(this.instructions_api);" text>Copy to Clipboard</v-btn>
+                            <v-btn color="green darken-1" @click="dialog_instructions_api = false;" text>Close</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
+
+
+                <v-dialog v-model="dialog_instructions_cli" max-width="800">
+                    <template v-slot:activator="{ props }">
+                        <v-btn v-bind="props" variant="text" icon color="primary">
+                            <v-icon>mdi-console</v-icon>
+                            <v-tooltip activator="parent" location="top">Repo Instruction</v-tooltip>
+                        </v-btn>
+                    </template>
+                    <v-card>
+                        <v-card-title class="text-h5">
+                            Repo Instructions
+                        </v-card-title>
+                        <v-card-text>
+                          <div>
+                            All repo operations available in the Web UI are also available via the OpenRepo Command Line Utility.  
+                            Below is an example using the CLI program to list all repositories using your user account's unique authentication Token:
+
+                        </div>
+
+                            <pre class="block bg-grey-darken-4 text-grey-lighten-3 pa-5 whitespace-pre overflow-auto">{{user_info.instructions_cli}}</pre>
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-spacer></v-spacer>
+                            <v-btn color="green darken-1" @click="copyInstructionsToClipboard(this.instructions_cli);" text>Copy to Clipboard</v-btn>
+                            <v-btn color="green darken-1" @click="dialog_instructions_cli = false;" text>Close</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
               </div>
               <div><a href="/back/change-password/">Change Password</a></div>
             </v-col>
@@ -91,7 +121,8 @@
       return {
         repos: [],
         show_global_error_msg: '',
-        dialog_instructions: false,
+        dialog_instructions_cli: false,
+        dialog_instructions_api: false,
 
         user_info: {},
       };
@@ -102,9 +133,11 @@
         UserDataService.whoAmI()
         .then(response => {
               this.user_info = response.data;
-              this.user_info.instructions = "curl -s -X GET " + window.location.origin + 
-                                            "/api/whoami -H 'Authorization: Token " + 
-                                            this.user_info.api_key + "'"
+              this.user_info.instructions_api = "curl -s -X GET " + window.location.origin + "/api/repos/ \\\n" + 
+                                                "     -H 'Authorization: Token " + this.user_info.api_key + "'";
+              this.user_info.instructions_cli = "export OPENREPO_SERVER=" + window.location.origin + "\n" +
+                                                "export OPENREPO_APIKEY=" + this.user_info.api_key + "\n" +
+                                                "openrepo list_repos" ;
               logger.debug(this.user_info);
           })
           .catch(e => {
@@ -113,8 +146,8 @@
 
           });
       },
-      copyCurlInstructionsToClipboard () {
-          navigator.clipboard.writeText(this.user_info.instructions);
+      copyInstructionsToClipboard (instructions) {
+          navigator.clipboard.writeText(instructions);
       },
     },
     mounted() {
