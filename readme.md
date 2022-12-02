@@ -12,7 +12,8 @@ The server supports:
   - REST API
   - CLI app to integrate with CI
 
-[Demo video]
+
+![OpenRepo Demo Video](https://github.com/openkilt/openrepo/blob/master/util/doc_images/image.jpg?raw=true)
 
 ## Getting Started
 
@@ -20,7 +21,7 @@ The preferred method for running OpenRepo is with Docker using the provided dock
 as well as instantiate a PostgreSQL database.  All persistent files (i.e., the database, cache data, PGP keys, and the package files) are stored in a relative folder named 
 openrepo-data.
 
-First ensure that you have installed Docker and the Docker Compose plugin https://docker-docs.netlify.app/compose/install/
+First ensure that you have installed Docker and the [Docker Compose plugin](https://docker-docs.netlify.app/compose/install/)
 
 
 To start the server:
@@ -40,7 +41,7 @@ If desired, it is possible to point to an alternative PostgreSQL server by updat
 
 ## CI Integration
 
-A common requirement is to automatically upload package files produced via Continuous Integration.  Please see the [CLI LINK] OpenRepo Command-Line-Interface documentation for more details.
+A common requirement is to automatically upload package files produced via Continuous Integration.  Please see the [OpenRepo Command-Line-Interface documentation](cli/) for more details.
 
 The CLI program (or REST API) can be used to push new packages to a repo, and can also be used to promote or copy packages to other repos.
 
@@ -60,7 +61,6 @@ Two add a new user:
 
 
 ## REST API
-
 
 
 ### Repo actions:
