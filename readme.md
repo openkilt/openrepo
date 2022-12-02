@@ -13,7 +13,7 @@ The server supports:
   - CLI app to integrate with CI
 
 
-![OpenRepo Demo Video](https://github.com/openkilt/openrepo/blob/master/util/doc_images/openrepo_demo.gif?raw=true)
+![OpenRepo Demo Video](https://github.com/openkilt/openrepo/blob/master/util/doc_images/openrepo-demo.gif?raw=true)
 
 ## Getting Started
 
