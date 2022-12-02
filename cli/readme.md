@@ -7,7 +7,7 @@ you could use the CLI app to automatically upload a package to a repo when a bui
 
  - First download the OpenRepo CLI program from the Releases
 
-        sudo wget https://github.com/xxxxxxxxxxxx -O /usr/local/bin/openrepo && sudo chmod +x /usr/local/bin/openrepo
+        sudo wget https://github.com/openkilt/openrepo/releases/download/v1.0.0/openrepo_cli_$(uname -m) -O /usr/local/bin/openrepo && sudo chmod +x /usr/local/bin/openrepo
 
  - Login to your OpenRepo server and navigate to the "User Info" page (/cfg/userinfo/)
 
