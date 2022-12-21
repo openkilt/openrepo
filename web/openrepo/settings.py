@@ -56,6 +56,7 @@ else:
     # https://security.stackexchange.com/questions/45687/what-does-djangos-allowed-hosts-variable-actually-do
     ALLOWED_HOSTS = ['*']
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 
