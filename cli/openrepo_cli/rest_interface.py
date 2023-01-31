@@ -131,13 +131,16 @@ class RestInterface:
         '''
         return self._request('package_delete', repo=repo_uid, package=package_uid)
 
-    def upload(self, filepath, repo_uid):
+    def upload(self, filepath, repo_uid, overwrite):
         '''
         Upload package files to a repo
         '''
         files = {'package_file': open(filepath, 'rb')}
+        postdata = None
+        if overwrite:
+            postdata = {'overwrite': '1'}
 
-        return self._request('upload', repo=repo_uid, files=files)
+        return self._request('upload', repo=repo_uid, files=files, postdata=postdata)
 
     def _request(self, endpoint_name, repo=None, package=None, query_args=None, postdata=None, files=None):
         endpoint = REQUEST_ENDPOINTS[endpoint_name]

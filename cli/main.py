@@ -65,6 +65,8 @@ def main():
 
     subparser_upload.add_argument("-r", "--repo_uid", help="Unique ID of repo to upload to", required=True, type=str)
 
+    subparser_upload.add_argument("-o", "--overwrite", action='store_true', help="Overwrite existing package if it already exists")
+
     subparser_upload.add_argument("filepath", help="path of file(s) to upload", nargs='+',
                                   type=str)
 
@@ -101,7 +103,7 @@ def main():
                 if not Path(filepath).is_file():
                     logger.warning(f"File does not exist {filepath}")
                     continue
-                response_content = interface.upload(repo_uid=args.repo_uid, filepath=filepath)
+                response_content = interface.upload(repo_uid=args.repo_uid, filepath=filepath, overwrite=args.overwrite)
 
         else:
             # CLI args were auto generated from rest_interface function names
