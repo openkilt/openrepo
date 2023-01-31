@@ -150,6 +150,7 @@ class RestInterface:
             url = url.replace('<package>', package)
 
         if query_args is not None:
+            url += '?'
             for k,v in query_args.items():
                 url += f'{k}={v}&'
             url = url[:-1]
