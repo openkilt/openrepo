@@ -32,6 +32,28 @@ class Command(BaseCommand):
         gpg = gnupg.GPG()
         gpg.encoding = 'utf-8'
 
-        import_result = gpg.import_keys_file(options['private_key_path'])
+        with open(options['private_key_path'], 'r') as pgp_f:
+            private_key_content = pgp_f.read()
 
+        gpg.import_keys_file(options['private_key_path'])
+        private_key = gpg.scan_keys(options['private_key_path'])
+        keyinfo = private_key[0]
+        fingerprint = keyinfo['fingerprint']
+        parts = keyinfo['uids'][0].split("<")
+        # Split the name and email address using the "<" and ">" characters as delimiters
+        name = parts[0].strip()
+        email = parts[1].strip(">").strip()
+
+        # Extract the public key
+        public_key = gpg.export_keys(private_key.fingerprints[0], False)
+
+
+
+        new_key = PGPSigningKey()
+        new_key.private_key_pem = private_key_content
+        new_key.public_key_pem = public_key
+        new_key.fingerprint = fingerprint
+        new_key.name = name
+        new_key.email = email
+        new_key.save()
         self.stdout.write(self.style.SUCCESS('Successfully imported key'))
