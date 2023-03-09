@@ -73,7 +73,7 @@ class DepRepoAdapter(BaseRepoAdapter):
 
         aptftp_options = f'--db {settings.DEB_DB_PATH} -o APT::FTPArchive::AlwaysStat=true'
         for poolname in poolnames:
-            exec_commands.append(f'apt-ftparchive {aptftp_options} packages pool/{poolname} > dists/stable/{poolname}/binary-{DEB_ARCH_NAME}/Packages')
+            exec_commands.append(f'apt-ftparchive {aptftp_options} packages pool/ > dists/stable/{poolname}/binary-{DEB_ARCH_NAME}/Packages')
             exec_commands.append(f'gzip -k dists/stable/{poolname}/binary-{DEB_ARCH_NAME}/Packages')
 
         for poolname in poolnames:
