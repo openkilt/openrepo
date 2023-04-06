@@ -40,6 +40,9 @@ except:
 OPENREPO_VAR_DIR = os.getenv('OPENREPO_VAR_DIR', '/var/lib/openrepo/')
 DOMAIN_NAME = os.getenv("OPENREPO_DOMAIN", "localhost:8080")
 
+_ignore_build_num_str = os.getenv("RPM_VERSION_IGNORE_BUILD_NUM", "false").lower()
+RPM_VERSION_IGNORE_BUILD_NUM = _ignore_build_num_str != "false" and _ignore_build_num_str != "0" and _ignore_build_num_str != "no"
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
