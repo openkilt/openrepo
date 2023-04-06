@@ -102,7 +102,7 @@ class Package(models.Model):
 
     class Meta:
         unique_together = (('package_uid', 'repo',),
-                           ('repo', 'package_name', 'version', ))
+                           ('repo', 'package_name', 'architecture', 'version', ))
 
 
 class Mirror(models.Model):

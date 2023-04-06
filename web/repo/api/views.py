@@ -283,10 +283,12 @@ class UploadViewSet(viewsets.ViewSet):
             raise rest_framework.exceptions.ParseError("Error processing uploaded file")
 
         if Package.objects.filter(repo=repo, package_name=file_info_adapter.get_name(),
+                                  architecture=file_info_adapter.get_architecture(),
                                   version=file_info_adapter.get_version()).count() > 0:
 
             if overwrite:
                 Package.objects.get(repo=repo, package_name=file_info_adapter.get_name(),
+                                  architecture=file_info_adapter.get_architecture(),
                                   version=file_info_adapter.get_version()).delete()
             else:
                 raise rest_framework.exceptions.ParseError(f"Package {file_info_adapter.get_name()} version {file_info_adapter.get_version()} "
