@@ -76,6 +76,7 @@ http {
         # All other requests (e.g., repo requests) go to repo static files
         location ~ ^/ {
             autoindex on;
+            absolute_redirect off;
             root /var/tmp/openrepo/www/;
             #add_header Cache-Control "public, max-age=1800";
         }
