@@ -27,7 +27,7 @@ First ensure that you have installed Docker and the [Docker Compose plugin](http
 To start the server:
 
     wget https://raw.githubusercontent.com/openkilt/openrepo/master/docker-compose.yml
-    docker-compose up -d
+    docker compose up -d
 
 You can now navigate to the server on http://localhost:7376
 

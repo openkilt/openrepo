@@ -1,5 +1,5 @@
 # Start with a node.js build image to compile the vue.js app distributables
-FROM node:18.11.0 AS vuebuilder
+FROM node:20.14.0 AS vuebuilder
 
 WORKDIR /build/openrepo/
 
@@ -12,7 +12,7 @@ RUN npm install && \
 
 
 # Now build the production image
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y \
       apt-utils          \
