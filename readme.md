@@ -69,12 +69,15 @@ Repo UID is created when a new repo is created.
 
     # list names of repos along with IDs
     GET /api/repos/
-
+    Example: curl -X GET http://<your-openrepo-instance>:7376/api/repos/ -H 'Authorization: Token <your-user-token>' 
+    
     # Show details for a particular repo
     GET /api/<repo>/
 
     # Create a new repo
     POST /api/repos/
+    Example: curl -X POST http://<your-openrepo-instance>:7376/api/repos/ -H 'Authorization: Token <your-user-token>' -F "repo_uid=<repo-name>" -F "repo_type=<deb|rpm|files>" -F "signing_key=<FINGERPRINT_OF_SIGNINGKEY"
+    You need to create a SigningKey otherwise you can not create
 
     # Delete a repo
     DELETE /api/<repo>/
@@ -88,10 +91,12 @@ Package UID is created when a new package is uploaded or copied
 
     # Upload a package to a repo
     POST /api/<repo>/upload/
-
+    Example: curl -X POST http://<your-openrepo-instance>:7376/api/<target-repository>/upload/ -H 'Authorization: Token <your-user-token>' -F "package_file=@/path/to/your.deb"
+    
     # Delete a package
     DELETE /api/<repo>/pkg/<package>/
-
+    Example: curl -X DELETE http://<your-openrepo-instance>:7376/api/<target-repository>/pkg/<package_uid> -H 'Authorization: Token <your-user-token>' 
+    
     # Show details for a particular package
     GET /api/<repo>/pkg/<package>/
 
