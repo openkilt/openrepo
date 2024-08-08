@@ -91,7 +91,7 @@ Package UID is created when a new package is uploaded or copied
 
     # Upload a package to a repo
     POST /api/<repo>/upload/
-    Example: curl -X http://<your-openrepo-instance>:7376/api/<target-repository>/upload/ -H 'Authorization: Token <your-user-token>' -F "package_file=@/path/to/your.deb"
+    Example: curl -X POST http://<your-openrepo-instance>:7376/api/<target-repository>/upload/ -H 'Authorization: Token <your-user-token>' -F "package_file=@/path/to/your.deb"
     
     # Delete a package
     DELETE /api/<repo>/pkg/<package>/
