@@ -59,7 +59,8 @@ else:
     # https://security.stackexchange.com/questions/45687/what-does-djangos-allowed-hosts-variable-actually-do
     ALLOWED_HOSTS = ['*']
 
-    # Added CSRF support through a reverse proxy with different hostname. https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-CSRF_TRUSTED_ORIGINS
+# Added CSRF support through a reverse proxy with different hostname. https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-CSRF_TRUSTED_ORIGINS
+# Origins are space delimited
 if os.getenv("OPENREPO_CSRF_TRUSTED_ORIGINS") :
     CSRF_TRUSTED_ORIGINS = os.getenv("OPENREPO_CSRF_TRUSTED_ORIGINS").split(' ')
 else:
