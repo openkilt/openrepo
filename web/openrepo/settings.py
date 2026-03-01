@@ -60,7 +60,10 @@ else:
     ALLOWED_HOSTS = ['*']
 
     # Added CSRF support through a reverse proxy with different hostname. https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-CSRF_TRUSTED_ORIGINS
-    CSRF_TRUSTED_ORIGINS = os.getenv("OPENREPO_CSRF_TRUSTED_ORIGINS",[])
+if os.getenv("OPENREPO_CSRF_TRUSTED_ORIGINS") :
+    CSRF_TRUSTED_ORIGINS = os.getenv("OPENREPO_CSRF_TRUSTED_ORIGINS").split(' ')
+else:
+    CSRF_TRUSTED_ORIGINS = []
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
