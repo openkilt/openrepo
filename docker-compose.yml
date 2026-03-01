@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   nginx:
     image: openkilt/openrepo:latest
@@ -10,8 +9,6 @@ services:
       - "django"
     volumes:
       - ./openrepo-data:/var/lib/openrepo
-
-
 
   django:
     image: openkilt/openrepo:latest
@@ -29,8 +26,8 @@ services:
       - OPENREPO_PG_PASSWORD=postgres
       - OPENREPO_PG_HOSTNAME=db
     depends_on:
-      - "db"
-
+      db:
+        condition: service_healthy
 
   worker:
     image: openkilt/openrepo:latest
@@ -47,7 +44,6 @@ services:
     depends_on:
       - "django"
 
-
   db:
     image: postgres:16.3-alpine3.20
     expose:
@@ -59,3 +55,8 @@ services:
       - POSTGRES_DB=openrepo
     volumes:
       - ./openrepo-data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
