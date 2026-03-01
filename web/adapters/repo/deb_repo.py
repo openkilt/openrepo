@@ -51,7 +51,7 @@ class DepRepoAdapter(BaseRepoAdapter):
         for dirpath in directories:
             fullpath = os.path.join(repo_path, dirpath)
             with self._buildlog_section(f"Creating directory {fullpath}") as log_entry:
-                os.makedirs(fullpath)
+                os.makedirs(fullpath, exist_ok=True)
 
         all_pools = " ".join(poolnames)
         release_conf =  f'APT::FTPArchive::Release::Codename "stable";' + "\n"
