@@ -22,6 +22,7 @@ services:
     volumes:
       - ./openrepo-data:/var/lib/openrepo
     environment:
+      # - "OPENREPO_CSRF_TRUSTED_ORIGINS=myproxiedname.example.com"   #Multiple domains are space delimited"
       - OPENREPO_DB_TYPE=postgresql
       - OPENREPO_PG_DATABASE=openrepo
       - OPENREPO_PG_USERNAME=postgres
