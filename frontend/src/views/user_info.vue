@@ -41,9 +41,9 @@
 
                 <v-dialog v-model="dialog_instructions_api" max-width="800">
                     <template v-slot:activator="{ props }">
-                        <v-btn v-bind="props" variant="text" icon color="primary">
+                        <v-btn v-bind="props" variant="text" icon color="primary" aria-label="API usage instructions">
                             <v-icon>mdi-api</v-icon>
-                            <v-tooltip activator="parent" location="top">Repo Instruction</v-tooltip>
+                            <v-tooltip activator="parent" location="top">API Instructions</v-tooltip>
                         </v-btn>
                     </template>
                     <v-card>
@@ -70,9 +70,9 @@
 
                 <v-dialog v-model="dialog_instructions_cli" max-width="800">
                     <template v-slot:activator="{ props }">
-                        <v-btn v-bind="props" variant="text" icon color="primary">
+                        <v-btn v-bind="props" variant="text" icon color="primary" aria-label="CLI usage instructions">
                             <v-icon>mdi-console</v-icon>
-                            <v-tooltip activator="parent" location="top">Repo Instruction</v-tooltip>
+                            <v-tooltip activator="parent" location="top">CLI Instructions</v-tooltip>
                         </v-btn>
                     </template>
                     <v-card>

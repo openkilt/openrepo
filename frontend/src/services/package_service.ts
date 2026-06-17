@@ -17,8 +17,8 @@
 import http from "../http_common";
 
 class PackageDataService {
-    getAll(repo_uid: string) {
-      return http.get(`/${repo_uid}/packages/`);
+    getAll(repo_uid: string, params?: any) {
+      return http.get(`/${repo_uid}/packages/`, { params });
     }
   
     get(repo_uid: string, package_uid: string) {

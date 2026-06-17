@@ -1,22 +1,6 @@
-<!--
- Copyright 2022 by Open Kilt LLC. All rights reserved.
- This file is part of the OpenRepo Repository Management Software (OpenRepo)
- OpenRepo is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License
- version 3 as published by the Free Software Foundation
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>.
--->
-
 <template>
     <v-app>
-    <SystemMessage 
+    <SystemMessage
       :message="this.show_global_error_msg" />
 
     <v-container class="my-5">
@@ -32,7 +16,7 @@
         <v-layout row wrap >
 
             <v-col cols="12" >
-                
+
                 <v-card >
                     <v-layout row wrap>
                         <v-col cols="12" class="pb-0 mb-6">
@@ -46,7 +30,7 @@
                         ></v-select>
                         </v-col>
                     </v-layout>
-                    
+
                     <v-layout row wrap>
                             <v-col  class="text-left  " cols="6">
                                 <strong>Build {{build_details.build_number}}</strong> - {{build_details.completion_status}}
@@ -57,7 +41,7 @@
                             </v-col>
 
                     </v-layout>
-                    
+
                     <v-layout row wrap>
                         <v-col  class="text-left mt-0 pt-0 mb-5 " cols="12">
                             <span class="text-caption">Started {{this.moment(build_details.timestamp).fromNow() }}</span>
@@ -65,13 +49,18 @@
                     </v-layout>
                     <v-divider></v-divider>
 
+                    <v-skeleton-loader
+                      v-if="log_lines.length === 0"
+                      type="list-item-three-line@4"
+                    ></v-skeleton-loader>
+
                     <v-card flat v-for="log_line in this.log_lines" :key="log_line.line_number"
                       class="log_line" :class="log_line.loglevel">
 
                         <v-layout row wrap>
                             <v-col  class="text-left  " cols="10">
 
-                                <span class="line_number mr-3">{{log_line.line_number}}</span> 
+                                <span class="line_number mr-3">{{log_line.line_number}}</span>
                                 <span>{{log_line.command}}</span>
                             </v-col>
                             <v-col  align="right" cols="2">
@@ -95,8 +84,6 @@
                         <v-divider></v-divider>
                     </v-card>
 
-
-                    
                 </v-card>
 
             </v-col>
@@ -170,12 +157,12 @@ export default {
                 logger.debug(response.data);
 
             })
-            .catch(e => {   
+            .catch(e => {
                 if (typeof e.response != 'undefined' && typeof e.response.data.detail != 'undefined')
                 this.show_global_error_msg = e.response.data.detail;
                 else
                 this.show_global_error_msg = 'Error loading repos: ' + e.message;
-                
+
                 logger.debug(e);
             });
         },
@@ -196,12 +183,12 @@ export default {
                     this.loadLogLines();
                 }
             })
-            .catch(e => {   
+            .catch(e => {
                 if (typeof e.response != 'undefined' && typeof e.response.data.detail != 'undefined')
                 this.show_global_error_msg = e.response.data.detail;
                 else
                 this.show_global_error_msg = 'Error loading repos: ' + e.message;
-                
+
                 logger.debug(e);
             });
         },
@@ -211,13 +198,13 @@ export default {
             this.build_summary.num_errors = 0;
             this.build_summary.num_warnings = 0;
             this.build_summary.num_logentries = 0;
-                
+
             this.log_lines.forEach(log_line => {
                 this.build_summary.num_logentries++;
                 if (log_line.loglevel == "warning")
                     this.build_summary.num_warnings++;
                 else if (log_line.loglevel == "error")
-                    this.build_summary.num_errors++;  
+                    this.build_summary.num_errors++;
             }, this);
         },
         loadLogLines() {
@@ -230,12 +217,12 @@ export default {
                 logger.debug(this.log_lines);
                 this.updateSummary();
             })
-            .catch(e => {   
+            .catch(e => {
                 if (typeof e.response != 'undefined' && typeof e.response.data.detail != 'undefined')
                 this.show_global_error_msg = e.response.data.detail;
                 else
                 this.show_global_error_msg = 'Error loading repos: ' + e.message;
-                
+
                 logger.debug(e);
             });
         },
@@ -251,7 +238,7 @@ export default {
     },
     mounted() {
         this.retrieveBuildList();
-        
+
     },
     unmounted() {
         console.log("UNMOUNTED");
@@ -263,28 +250,27 @@ export default {
 
 <style>
 
-
     .log_line.debug {
-      border-left: 8px solid #b9b9b9;
+      border-left: 8px solid rgba(var(--v-theme-on-surface), 0.23);
     }
     .log_line.info {
-      border-left: 8px solid #3a96d3;
+      border-left: 8px solid rgb(var(--v-theme-primary));
     }
     .log_line.warning {
-      border-left: 8px solid #d48529;
-      background-color: #d4852922;
+      border-left: 8px solid rgb(var(--v-theme-warning));
+      background-color: rgba(var(--v-theme-warning), 0.13);
     }
     .log_line.error {
-      border-left: 8px solid #df3f3f;
-      background-color: #df3f3f22;
+      border-left: 8px solid rgb(var(--v-theme-error));
+      background-color: rgba(var(--v-theme-error), 0.13);
     }
     .line_number {
-        color: gray;
+        color: rgba(var(--v-theme-on-surface), 0.5);
     }
     .log_message {
-        border-top:1px dashed gray;
+        border-top:1px dashed rgba(var(--v-theme-on-surface), 0.23);
     }
     .log_message pre {
-        background-color: #eeeeee;
+        background-color: rgba(var(--v-theme-on-surface), 0.05);
     }
 </style>

@@ -1,21 +1,5 @@
-<!--
- Copyright 2022 by Open Kilt LLC. All rights reserved.
- This file is part of the OpenRepo Repository Management Software (OpenRepo)
- OpenRepo is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License
- version 3 as published by the Free Software Foundation
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>.
--->
-
 <template>
-    <SystemMessage 
+    <SystemMessage
       :message="this.show_global_error_msg" />
     <v-container class="my-5">
 
@@ -27,12 +11,18 @@
 
             <v-col sm="2" align="right">
 
-                <!-- Create Repo dialog -->
                 <DialogCreateRepo @create_success=this.retrieveRepos />
 
             </v-col>
         </v-layout>
-        <v-layout row v-if="repos.length == 0">
+
+        <v-skeleton-loader
+          v-if="loading"
+          type="list-item-three-line@4"
+          class="mt-4"
+        ></v-skeleton-loader>
+
+        <v-layout row v-else-if="repos.length == 0">
           <v-col cols="12">
 
             <v-alert
@@ -44,9 +34,9 @@
 
           </v-col>
         </v-layout>
-        <v-card :to="'/cfg/repo/' + repo.repo_uid" flat v-for="repo in repos" :key="repo.repo_uid">
 
-            
+        <v-card :to="'/cfg/repo/' + repo.repo_uid" flat v-for="repo in repos" :key="repo.repo_uid" v-else>
+
             <v-layout row wrap :class="`repo complete    ${repo.repo_uid}`">
                 <v-col sm="9">
                     <div class="text-h5">{{ repo.repo_uid }}</div>
@@ -66,11 +56,11 @@
 
     </v-container>
 </template>
-  
+
   <script>
   import RepoDataService from "../services/repo_service";
   import {logger} from '@/logger.ts'
-  
+
   import DialogCreateRepo from '@/components/dialog_create_repo.vue'
   import SystemMessage from '@/components/system_message.vue'
 
@@ -84,6 +74,7 @@
       return {
         repos: [],
         show_global_error_msg: '',
+        loading: true,
         repo_type_icons: {
             deb: "mdi-ubuntu",
             rpm: "mdi-redhat",
@@ -95,12 +86,15 @@
     },
     methods: {
       retrieveRepos() {
+        this.loading = true;
         RepoDataService.getAll()
           .then(response => {
             this.repos = response.data.results;
+            this.loading = false;
             logger.debug(response.data);
           })
           .catch(e => {
+            this.loading = false;
             if (typeof e.response != 'undefined' && typeof e.response.data.detail != 'undefined')
               this.show_global_error_msg = e.response.data.detail;
             else
@@ -109,12 +103,12 @@
             logger.debug(e);
           });
       },
-  
+
       refreshList() {
         this.retrieveRepos();
       },
-  
-      
+
+
     },
     mounted() {
 
@@ -122,11 +116,11 @@
     }
   };
   </script>
-  
+
 
   <style>
     .repo{
-      border-left: 4px solid #2196f3;
-      border-right: 4px solid #2196f3;
+      border-left: 4px solid rgb(var(--v-theme-primary));
+      border-right: 4px solid rgb(var(--v-theme-primary));
     }
 </style>

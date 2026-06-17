@@ -34,6 +34,7 @@
                     <v-btn
                     v-bind="props"
                     icon
+                    aria-label="Navigation menu"
                     >
                         <v-icon>mdi-dots-vertical</v-icon>
                     </v-btn>

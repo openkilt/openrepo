@@ -1,21 +1,5 @@
-<!--
- Copyright 2022 by Open Kilt LLC. All rights reserved.
- This file is part of the OpenRepo Repository Management Software (OpenRepo)
- OpenRepo is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License
- version 3 as published by the Free Software Foundation
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>.
--->
-
 <template>
-    <SystemMessage 
+    <SystemMessage
       :message="this.show_global_error_msg" />
 
     <v-container class="my-5">
@@ -32,7 +16,8 @@
 
                 <v-dialog v-model="dialog_instructions" max-width="600">
                     <template v-slot:activator="{ props }">
-                        <v-btn v-bind="props" variant="text" icon color="primary">
+                        <v-btn v-bind="props" variant="text" icon color="primary"
+                               aria-label="Repo instructions">
                             <v-icon>mdi-information-outline</v-icon>
                             <v-tooltip activator="parent" location="top">Repo Instruction</v-tooltip>
                         </v-btn>
@@ -52,16 +37,18 @@
                     </v-card>
                 </v-dialog>
 
-                <v-btn :to="this.status_href" icon variant="text" color="primary">
+                <v-btn :to="this.status_href" icon variant="text" color="primary"
+                       aria-label="Build status">
                         <v-icon>mdi-progress-wrench</v-icon>
                         <v-tooltip activator="parent" location="top">Build Status</v-tooltip>
                 </v-btn>
 
-                <v-btn :to="this.settings_href" icon variant="text" color="primary">
+                <v-btn :to="this.settings_href" icon variant="text" color="primary"
+                       aria-label="Repo settings">
                         <v-icon>mdi-cog</v-icon>
                         <v-tooltip activator="parent" location="top">Repo Settings</v-tooltip>
                 </v-btn>
-                
+
             </v-col>
         </v-layout>
             <v-divider></v-divider>
@@ -70,11 +57,13 @@
 
             <v-col cols="8" align="left">
                 <div>
-                    <v-btn @click="selectAll(true)" icon variant="text" color="primary">
+                    <v-btn @click="selectAll(true)" icon variant="text" color="primary"
+                           aria-label="Select all packages">
                         <v-icon>mdi-checkbox-multiple-outline</v-icon>
                         <v-tooltip activator="parent" location="top">Select All</v-tooltip>
                     </v-btn>
-                    <v-btn @click="selectAll(false)" icon variant="text" color="primary">
+                    <v-btn @click="selectAll(false)" icon variant="text" color="primary"
+                           aria-label="Unselect all packages">
                         <v-icon>mdi-checkbox-multiple-blank-outline</v-icon>
                         <v-tooltip activator="parent" location="top">Unselect All</v-tooltip>
                     </v-btn>
@@ -83,25 +72,25 @@
             </v-col>
             <v-col align="right" cols="4" >
 
-                <DialogCopyPackages 
-                :repo_uid="this.repo_uid" 
+                <DialogCopyPackages
+                :repo_uid="this.repo_uid"
                 :selected_pkgs="this.selected_pkgs"
                 :repo_type="this.repo_details.repo_type" />
 
-                <DialogDeletePackages 
-                :repo_uid="this.repo_uid" 
+                <DialogDeletePackages
+                :repo_uid="this.repo_uid"
                 :selected_pkgs="this.selected_pkgs"
                 @delete_success="this.selected_pkgs = []; this.retrievePackages()" />
 
-                <DialogCopyPackages 
+                <DialogCopyPackages
                 promote
                 :repo_promote_uid="this.repo_details.promote_to"
-                :repo_uid="this.repo_uid" 
+                :repo_uid="this.repo_uid"
                 :selected_pkgs="this.selected_pkgs"
                 :repo_type="this.repo_details.repo_type" />
 
-                <DialogUploadPackages 
-                :repo_uid="this.repo_uid" 
+                <DialogUploadPackages
+                :repo_uid="this.repo_uid"
                 :repo_type="this.repo_details.repo_type"
                 @uploads_complete="this.retrievePackages" />
 
@@ -196,6 +185,12 @@ export default {
             show_global_error_msg: '',
             dialog_instructions: false,
             is_readonly: false,
+            loading: true,
+            page: 1,
+            totalItems: 0,
+            itemsPerPage: 100,
+            search: '',
+            searchTimer: null,
             settings_href: '/cfg/repo/' + this.$route.params.repo_uid + '/settings/',
             status_href:   '/cfg/repo/' + this.$route.params.repo_uid + '/status/',
             breadcrumbs: [
@@ -212,16 +207,22 @@ export default {
             ],
         };
     },
+    computed: {
+      ...mapState({
+        username: 'username',
+        is_superuser: 'is_superuser'
+      }),
+      totalPages() {
+        return Math.ceil(this.totalItems / this.itemsPerPage);
+      },
+    },
     methods: {
         retrieveRepoDetails() {
             RepoDataService.get(this.repo_uid)
             .then(response => {
                 this.repo_details = response.data;
-                // Swap out special <origin> tag in repo instructions with window.location.origin
                 this.repo_details.repo_instructions = this.repo_details.repo_instructions.replaceAll("<origin>", window.location.origin);
-                // Check if the list of write_access usernames matches current user
                 this.is_readonly = !this.is_superuser && this.repo_details.write_access.indexOf(this.username) === -1;
-
             })
             .catch(e => {
                 logger.debug(e);
@@ -235,17 +236,14 @@ export default {
             return moment(value).format('YYYY-MM-DD HH:mm:ss');
         },
         waitFor(conditionFunction) {
-
             const poll = resolve => {
                 if(conditionFunction()) resolve();
                 else setTimeout(_ => poll(resolve), 10);
             }
-
             return new Promise(poll);
         },
         flagPromotables(pkgs_here: Array<any>, pkgs_promote: Array<any>)
         {
-            // First create a list of most recent versions in the promote repo
             let highest_promotes = {}
 
             pkgs_promote.forEach(pkg => {
@@ -253,12 +251,11 @@ export default {
                     let cur_ver = semver.coerce(pkg.version, true);
                     if (cur_ver == null)
                         return;
-                        
+
                     if (highest_promotes[pkg.package_name] === undefined)
                     {
                         highest_promotes[pkg.package_name] = cur_ver;
-                    } 
-                    // If this pkg is > version than the one in the dictionary, use this instead
+                    }
                     if (semver.gt(cur_ver, highest_promotes[pkg.package_name], true))
                     {
                         highest_promotes[pkg.package_name] = cur_ver;
@@ -271,12 +268,9 @@ export default {
 
             pkgs_here.forEach(pkg => {
                 let cur_ver = semver.coerce(pkg.version, true);
-                if (highest_promotes[pkg.package_name] === undefined || 
+                if (highest_promotes[pkg.package_name] === undefined ||
                     semver.gt(cur_ver, highest_promotes[pkg.package_name], true))
                 {
-                    // Package does not exist in promote repo, OR
-                    // the package in this repo is higher version than promotable
-                    // so it is promotable.
                     pkg.promotable = true;
                     logger.debug("Promotable package: " + pkg.package_name);
                 }
@@ -287,38 +281,60 @@ export default {
             }, this)
 
             this.packages = pkgs_here;
-
         },
         copyRepoInstructionsToClipboard () {
             navigator.clipboard.writeText(this.repo_details.repo_instructions);
+        },
+        buildParams(extra?: any) {
+            let params: any = { page: this.page, page_size: this.itemsPerPage };
+            if (this.search) params.search = this.search;
+            if (extra) Object.assign(params, extra);
+            return params;
+        },
+        fetchPage(newPage?: number) {
+          this.loading = true;
+          if (newPage) this.page = newPage;
+          PackageDataService.getAll(this.repo_uid, this.buildParams())
+            .then(response => {
+              this.packages = response.data.results;
+              this.totalItems = response.data.count;
+              this.loading = false;
+            })
+            .catch(e => {
+              logger.debug(e);
+              this.loading = false;
+            });
         },
         retrievePackages() {
             let completion_count = 0;
             let repo_pkgs = [];
             let is_promotable = this.repo_details.promote_to != null && this.repo_details.promote_to != '';
 
-            // First get all packages for this repo
-            PackageDataService.getAll(this.repo_uid)
+            this.loading = true;
+            PackageDataService.getAll(this.repo_uid, this.buildParams())
             .then(response => {
                 repo_pkgs = response.data.results;
-                
+                this.totalItems = response.data.count;
+
                 if (!is_promotable)
+                {
                     this.packages = repo_pkgs;
+                    this.loading = false;
+                }
 
                 completion_count++;
                 logger.debug(response.data);
             })
             .catch(e => {
                 completion_count++;
+                this.loading = false;
                 logger.debug(e);
             })
 
-            // Next get all packages for the promotion repo (if it exists)
-            // so that we can highlight packages eligible for promotion
             if (is_promotable)
             {
                 let promote_pkgs = [];
-                PackageDataService.getAll(this.repo_details.promote_to)
+                PackageDataService.getAll(this.repo_details.promote_to, { page_size: 2000 })
                 .then(response => {
                     promote_pkgs = response.data.results;
                     completion_count++;
@@ -326,23 +342,20 @@ export default {
                 })
                 .catch(e => {
                     completion_count++;
+                    this.loading = false;
                     logger.debug(e);
                 });
 
-                // Now once both lists are downloaded, compare the versions and flag promotable packages
                 this.waitFor(_ => completion_count >= 2)
                 .then(_ => {
                     logger.debug('All package list requests complete')
-
                     this.flagPromotables(repo_pkgs, promote_pkgs);
+                    this.loading = false;
                 });
-
             }
         },
         selectAll(enable: boolean) {
-            
             this.selected_pkgs = [];
-
             if (enable)
             {
                 this.packages.forEach(pkg => {
@@ -354,17 +367,32 @@ export default {
     watch: {
         repo_details(old_details, new_details)
         {
-            // Wait for repo details to get pulled first before pulling packages initially
             this.retrievePackages();
+        },
+        page()
+        {
+            if (this.repo_details.repo_uid)
+              this.retrievePackages();
+        },
+        itemsPerPage()
+        {
+            this.page = 1;
+            if (this.repo_details.repo_uid)
+              this.retrievePackages();
+        },
+        search()
+        {
+            if (this.searchTimer) clearTimeout(this.searchTimer);
+            this.searchTimer = setTimeout(() => {
+                this.page = 1;
+                if (this.repo_details.repo_uid)
+                  this.retrievePackages();
+            }, 300);
         }
     },
     mounted() {
         this.retrieveRepoDetails();
     },
-    computed: mapState({
-        username: 'username',
-        is_superuser: 'is_superuser'
-    })
 }
 
 </script>
@@ -372,9 +400,13 @@ export default {
 <style>
 
     .package.promotable{
-      border-left: 8px solid #3cd1c2;
+      border-left: 8px solid rgb(var(--v-theme-secondary));
     }
     .package.not-promotable {
-      border-left: 8px solid #cccccc;
+      border-left: 8px solid rgba(var(--v-theme-on-surface), 0.12);
+    }
+    .page-size-select {
+      max-width: 130px;
+      display: inline-block;
     }
 </style>
