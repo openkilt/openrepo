@@ -129,6 +129,64 @@ class AdapterTestCase(TestCase):
         self.assertEqual(adapter.get_version(), '1.2.3.1')
         self.assertEqual(adapter.get_architecture(), 'x86_64')
 
+    def test_copy_packages_with_same_filename_different_versions(self):
+        """Test that _copy_packages creates unique pool symlinks when multiple
+        packages share the same original filename but differ in version."""
+        pkg1 = Package.objects.create(
+            repo=self.repo,
+            package_uid="pkg-one-uid",
+            filename="kumomta.Ubuntu22.04.deb",
+            package_name="kumomta",
+            version="1.0.0",
+            architecture="all",
+            upload_date="2022-01-01T00:00:00Z",
+            checksum_sha512="aaaa"
+        )
+        pkg2 = Package.objects.create(
+            repo=self.repo,
+            package_uid="pkg-two-uid",
+            filename="kumomta.Ubuntu22.04.deb",
+            package_name="kumomta",
+            version="2.0.0",
+            architecture="all",
+            upload_date="2022-01-02T00:00:00Z",
+            checksum_sha512="bbbb"
+        )
+
+        for pkg in [pkg1, pkg2]:
+            rel = pkg.relative_path()
+            full = os.path.join(settings.STORAGE_PATH, rel)
+            os.makedirs(os.path.dirname(full), exist_ok=True)
+            with open(full, "w") as f:
+                f.write(f"content {pkg.version}")
+
+        adapter = DepRepoAdapter(self.repo)
+        adapter.build = Build.objects.create(repo=self.repo, build_number=1)
+        adapter.packages = Package.objects.filter(repo=self.repo)
+
+        dest = os.path.join(settings.REPO_WWW_PATH, "pool_main")
+        os.makedirs(dest, exist_ok=True)
+        adapter._copy_packages(dest)
+
+        pool_files = sorted(os.listdir(dest))
+        self.assertEqual(len(pool_files), 2,
+                         "Expected both versions to have unique pool filenames")
+
+        expected = ["kumomta_1.0.0_all.deb", "kumomta_2.0.0_all.deb"]
+        self.assertEqual(pool_files, expected)
+
+        expected_targets = {
+            "kumomta_1.0.0_all.deb": os.path.join(settings.STORAGE_PATH, pkg1.relative_path()),
+            "kumomta_2.0.0_all.deb": os.path.join(settings.STORAGE_PATH, pkg2.relative_path()),
+        }
+        for pool_name, expected_target in expected_targets.items():
+            link_path = os.path.join(dest, pool_name)
+            self.assertTrue(os.path.islink(link_path),
+                            f"{pool_name} should be a symlink")
+            self.assertEqual(os.readlink(link_path), expected_target)
+            with open(expected_target) as f:
+                self.assertIn(pool_name.split("_")[1], f.read())
+
     @patch('subprocess.run')
     @patch('repo.storage.keyring.PGPKeyring.ensure_key')
     def test_rpm_repo_generation(self, mock_ensure_key, mock_run):
