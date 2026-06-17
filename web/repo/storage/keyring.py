@@ -62,9 +62,9 @@ class PGPKeyring:
 
         return new_key
 
-    def delete(self, fingerprint):
+    def delete(self, fingerprint, passphrase=''):
         # Delete private key
-        self.gpg.delete_keys(fingerprint, secret=True, passphrase='')
+        self.gpg.delete_keys(fingerprint, secret=True, passphrase=passphrase)
         # Delete public key
         self.gpg.delete_keys(fingerprint, secret=False)
 
@@ -85,15 +85,17 @@ class PGPKeyring:
                 break
 
         if not found:
-            self.gpg.import_keys(pgp_key.private_key_pem)
+            passphrase = pgp_key.passphrase if pgp_key.passphrase else None
+            self.gpg.import_keys(pgp_key.private_key_pem, passphrase=passphrase)
             self.gpg.trust_keys(pgp_key.fingerprint, 'TRUST_ULTIMATE')
-        #pass
 
     def detach_sign_file(self, pgp_key, output_file, input_file, clear_sign=False):
+        passphrase = pgp_key.passphrase if pgp_key.passphrase else None
         with open(input_file, 'r') as inf:
             output_content = self.gpg.sign_file(inf, detach=True, keyid=pgp_key.fingerprint,
                                                 clearsign=clear_sign, binary=False,
-                                                output=output_file, extra_args=['-a'])
+                                                output=output_file, extra_args=['-a'],
+                                                passphrase=passphrase)
 
         #with open(output_file, 'w') as outf:
         #    outf.write(str(output_content))

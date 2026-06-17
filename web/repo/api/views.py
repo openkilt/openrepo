@@ -108,7 +108,7 @@ class PGPKeysViewSet(viewsets.ModelViewSet):
             })
 
         keyring = PGPKeyring()
-        keyring.delete(instance.fingerprint)
+        keyring.delete(instance.fingerprint, passphrase=instance.passphrase)
 
         self.perform_destroy(instance)
         return Response(status=rest_framework.status.HTTP_204_NO_CONTENT)

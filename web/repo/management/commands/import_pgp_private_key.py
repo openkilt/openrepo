@@ -22,6 +22,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('private_key_path', type=str, help='Path to GPG private key stored in PEM format')
+        parser.add_argument('--passphrase', type=str, help='Passphrase for the private key (if any)')
 
     def handle(self, *args, **options):
 
@@ -35,19 +36,21 @@ class Command(BaseCommand):
         with open(options['private_key_path'], 'r') as pgp_f:
             private_key_content = pgp_f.read()
 
-        gpg.import_keys_file(options['private_key_path'])
+        passphrase = options.get('passphrase') or None
+        import_result = gpg.import_keys(private_key_content, passphrase=passphrase)
+
+        if import_result.count == 0:
+            self.stdout.write(self.style.ERROR('Failed to import key'))
+            return
+
         private_key = gpg.scan_keys(options['private_key_path'])
         keyinfo = private_key[0]
         fingerprint = keyinfo['fingerprint']
         parts = keyinfo['uids'][0].split("<")
-        # Split the name and email address using the "<" and ">" characters as delimiters
         name = parts[0].strip()
         email = parts[1].strip(">").strip()
 
-        # Extract the public key
-        public_key = gpg.export_keys(private_key.fingerprints[0], False)
-
-
+        public_key = gpg.export_keys(fingerprint, False)
 
         new_key = PGPSigningKey()
         new_key.private_key_pem = private_key_content
@@ -55,5 +58,6 @@ class Command(BaseCommand):
         new_key.fingerprint = fingerprint
         new_key.name = name
         new_key.email = email
+        new_key.passphrase = options.get('passphrase', '') or ''
         new_key.save()
         self.stdout.write(self.style.SUCCESS('Successfully imported key'))

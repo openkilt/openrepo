@@ -31,6 +31,7 @@ class PGPSigningKey(models.Model):
     fingerprint = models.CharField(db_index=True, unique=True, max_length=65535)
     private_key_pem = models.CharField(max_length=65536)
     public_key_pem = models.CharField(max_length=65536)
+    passphrase = models.CharField(max_length=65536, blank=True, default='')
 
     creation_date = models.DateTimeField(auto_now_add=True, blank=True)
 
