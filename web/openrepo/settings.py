@@ -212,7 +212,7 @@ REST_FRAMEWORK = {
         #'rest_framework.permissions.IsAuthenticated'
         'repo.api.authentication.CustomOpenRepoPermission'
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'repo.api.pagination.OpenRepoPagination',
     'PAGE_SIZE': 2000
 }
 

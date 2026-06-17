@@ -97,60 +97,102 @@
             </v-col>
         </v-layout>
 
+        <v-text-field
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          label="Search packages..."
+          variant="outlined"
+          density="compact"
+          hide-details
+          clearable
+          class="mt-2"
+        ></v-text-field>
 
+        <v-skeleton-loader
+          v-if="loading"
+          type="table-row-divider@6"
+          class="mt-4"
+        ></v-skeleton-loader>
 
-        <v-card flat>
+        <v-alert
+          v-else-if="packages.length === 0"
+          density="compact"
+          type="info"
+          class="mt-4"
+        >
+          No packages found in this repository. Upload a package to get started.
+        </v-alert>
 
-            <v-layout class="font-weight-bold" row wrap>
+        <template v-else>
+          <v-layout row wrap class="mt-2" align="center">
+            <v-col cols="6">
+              <span class="text-caption">
+                Showing {{ (page - 1) * itemsPerPage + 1 }}-{{ Math.min(page * itemsPerPage, totalItems) }} of {{ totalItems }}
+              </span>
+            </v-col>
+            <v-col cols="6" align="right">
+              <v-select
+                v-model="itemsPerPage"
+                :items="[25, 50, 100, 200, 500]"
+                label="Per page"
+                density="compact"
+                variant="outlined"
+                hide-details
+                class="page-size-select"
+              ></v-select>
+            </v-col>
+          </v-layout>
+          <v-card flat class="mt-2">
+              <v-layout class="font-weight-bold" row wrap>
+                  <v-col cols="4">
+                      <div>Package Name</div>
+                  </v-col>
+                  <v-col  align="left" cols="3">
+                      <div>Version</div>
+                  </v-col>
+                  <v-col  align="left" cols="3">
+                      <div>Architecture</div>
+                  </v-col>
+                  <v-col  align="right" cols="2">
+                      <div>Upload Date</div>
+                  </v-col>
+              </v-layout>
+              <v-divider></v-divider>
+          </v-card>
+          <v-card flat v-for="pkg in packages" :key="pkg.package_uid">
+              <v-layout row wrap class="package"
+                      :class="pkg.promotable ? 'promotable' : 'not-promotable'">
+                  <v-col  class="text-left  " cols="4">
+                      <v-checkbox-btn inline
+                      density="compact"
+                      v-model="selected_pkgs"
+                      :label=pkg.package_name
+                      color="primary"
+                      :value=pkg.package_uid
+                      hide-details
+                      ></v-checkbox-btn>
+                  </v-col>
+                  <v-col  align="left" cols="3">
+                      <div>{{ pkg.version }}</div>
+                  </v-col>
+                  <v-col  align="left" cols="3">
+                      <div>{{ pkg.architecture }}</div>
+                  </v-col>
+                  <v-col  align="right" cols="2">
+                      <div>{{ this.format_date(pkg.upload_date )}}</div>
+                  </v-col>
+              </v-layout>
+              <v-divider></v-divider>
+          </v-card>
 
-                <v-col cols="4">
-                    <div>Package Name</div>
-                </v-col>
-
-                <v-col  align="left" cols="3">
-                    <div>Version</div>
-                </v-col>
-
-                <v-col  align="left" cols="3">
-                    <div>Architecture</div>
-                </v-col>
-
-                <v-col  align="right" cols="2">
-                    <div>Upload Date</div>
-                </v-col>
-
-            </v-layout>
-            <v-divider></v-divider>
-            </v-card>
-        <v-card flat v-for="pkg in packages" :key="pkg.package_uid">
-
-            <v-layout row wrap class="package" 
-                    :class="pkg.promotable ? 'promotable' : 'not-promotable'">
-                <v-col  class="text-left  " cols="4">
-
-                    <v-checkbox-btn inline
-                    density="compact"
-                    v-model="selected_pkgs"
-                    :label=pkg.package_name
-                    color="primary"
-                    :value=pkg.package_uid
-                    hide-details
-                    ></v-checkbox-btn>
-
-                </v-col>
-
-                <v-col  align="left" cols="3">
-                    <div>{{ pkg.version }}</div>
-                </v-col>
-                <v-col  align="left" cols="3">
-                    <div>{{ pkg.architecture }}</div>
-                </v-col>
-                <v-col  align="right" cols="2">
-                    <div>{{ this.format_date(pkg.upload_date )}}</div>
-                </v-col>
-            </v-layout>
-            <v-divider></v-divider>
-        </v-card>
+          <v-pagination
+            v-if="totalPages > 1"
+            v-model="page"
+            :length="totalPages"
+            :total-visible="7"
+            class="mt-4"
+          ></v-pagination>
+        </template>
     </v-container>
 
 </template>
@@ -316,7 +358,7 @@ export default {
                 repo_pkgs = response.data.results;
                 this.totalItems = response.data.count;
 
-                if (!is_promotable)
+                if (!is_promotable || this.search)
                 {
                     this.packages = repo_pkgs;
                     this.loading = false;
@@ -331,7 +373,7 @@ export default {
                 logger.debug(e);
             })
 
-            if (is_promotable)
+            if (is_promotable && !this.search)
             {
                 let promote_pkgs = [];
                 PackageDataService.getAll(this.repo_details.promote_to, { page_size: 2000 })

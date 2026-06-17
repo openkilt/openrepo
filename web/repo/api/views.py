@@ -20,6 +20,7 @@ from datetime import datetime
 from rest_framework.response import Response
 from .filters import BuildFilter, BuildLogFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 from .serializers import UserSerializer, UserDetailSerializer, RepoSummarySerializer, \
                         PackageSummarySerializer, RepoDetailSerializer, PackageDetailSerializer, \
                         UploadSerializer, PGPKeySerializer, CopySerializer, BuildSerializer, BuildLogSerializer
@@ -142,6 +143,8 @@ class PackagesViewSet(viewsets.ModelViewSet):
     lookup_field = 'repo__repo_uid'
     queryset = Package.objects.all().order_by('-filename')
     serializer_class = PackageSummarySerializer
+    filter_backends = [SearchFilter]
+    search_fields = ['package_name', 'filename', 'version', 'architecture']
 
     def get_queryset(self):
         """
