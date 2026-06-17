@@ -20,7 +20,7 @@ from datetime import datetime
 from rest_framework.response import Response
 from .filters import BuildFilter, BuildLogFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter
+from rest_framework.filters import SearchFilter, OrderingFilter
 from .serializers import UserSerializer, UserDetailSerializer, RepoSummarySerializer, \
                         PackageSummarySerializer, RepoDetailSerializer, PackageDetailSerializer, \
                         UploadSerializer, UploadTaskSerializer, PGPKeySerializer, CopySerializer, BuildSerializer, BuildLogSerializer
@@ -143,10 +143,12 @@ class PackagesViewSet(viewsets.ModelViewSet):
     API endpoint that allows groups to be viewed or edited.
     """
     lookup_field = 'repo__repo_uid'
-    queryset = Package.objects.all().order_by('-filename')
+    queryset = Package.objects.all()
     serializer_class = PackageSummarySerializer
-    filter_backends = [SearchFilter]
+    filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['package_name', 'filename', 'version', 'architecture']
+    ordering_fields = ['package_name', 'version', 'architecture', 'upload_date']
+    ordering = ['-upload_date']
 
     def get_queryset(self):
         """

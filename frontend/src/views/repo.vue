@@ -145,16 +145,28 @@
           <v-card flat class="mt-2">
               <v-layout class="font-weight-bold" row wrap>
                   <v-col cols="4">
-                      <div>Package Name</div>
+                      <v-btn variant="text" class="pa-0 text-none font-weight-bold text-body-1" @click="toggleSort('package_name')">
+                        Package Name
+                        <v-icon size="small" class="ml-1">{{ sortIcon('package_name') }}</v-icon>
+                      </v-btn>
                   </v-col>
                   <v-col  align="left" cols="3">
-                      <div>Version</div>
+                      <v-btn variant="text" class="pa-0 text-none font-weight-bold text-body-1" @click="toggleSort('version')">
+                        Version
+                        <v-icon size="small" class="ml-1">{{ sortIcon('version') }}</v-icon>
+                      </v-btn>
                   </v-col>
                   <v-col  align="left" cols="3">
-                      <div>Architecture</div>
+                      <v-btn variant="text" class="pa-0 text-none font-weight-bold text-body-1" @click="toggleSort('architecture')">
+                        Architecture
+                        <v-icon size="small" class="ml-1">{{ sortIcon('architecture') }}</v-icon>
+                      </v-btn>
                   </v-col>
                   <v-col  align="right" cols="2">
-                      <div>Upload Date</div>
+                      <v-btn variant="text" class="pa-0 text-none font-weight-bold text-body-1" @click="toggleSort('upload_date')">
+                        Upload Date
+                        <v-icon size="small" class="ml-1">{{ sortIcon('upload_date') }}</v-icon>
+                      </v-btn>
                   </v-col>
               </v-layout>
               <v-divider></v-divider>
@@ -233,6 +245,8 @@ export default {
             itemsPerPage: 100,
             search: '',
             searchTimer: null,
+            sortColumn: 'upload_date',
+            sortDirection: 'desc',
             settings_href: '/cfg/repo/' + this.$route.params.repo_uid + '/settings/',
             status_href:   '/cfg/repo/' + this.$route.params.repo_uid + '/status/',
             breadcrumbs: [
@@ -327,9 +341,25 @@ export default {
         copyRepoInstructionsToClipboard () {
             navigator.clipboard.writeText(this.repo_details.repo_instructions);
         },
+        toggleSort(column: string) {
+            if (this.sortColumn === column) {
+                this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                this.sortColumn = column;
+                this.sortDirection = 'asc';
+            }
+            this.page = 1;
+            this.retrievePackages();
+        },
+        sortIcon(column: string) {
+            if (this.sortColumn !== column) return 'mdi-sort-variant';
+            return this.sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down';
+        },
         buildParams(extra?: any) {
             let params: any = { page: this.page, page_size: this.itemsPerPage };
             if (this.search) params.search = this.search;
+            const dir = this.sortDirection === 'desc' ? '-' : '';
+            params.ordering = dir + this.sortColumn;
             if (extra) Object.assign(params, extra);
             return params;
         },
