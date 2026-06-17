@@ -31,12 +31,54 @@
             <v-card-text>
             <v-container>
                 <v-row>
-                <v-col cols="12">
-                    <v-file-input :accept=FILE_TYPES[this.repo_type]
-                        v-model="upload_file_list" counter multiple
-                        chips show-size truncate-length="32"
-                        :disabled="isUploading"></v-file-input>
-                </v-col>
+                    <v-col cols="12">
+                        <div
+                            class="drop-zone"
+                            :class="{ 'drag-over': isDragging, 'has-files': upload_file_list.length > 0 }"
+                            @dragover.prevent="isDragging = true"
+                            @dragleave.prevent="isDragging = false"
+                            @drop.prevent="onDrop"
+                            @click="triggerFileInput"
+                        >
+                            <v-icon size="40" :color="upload_file_list.length > 0 ? 'primary' : 'grey'">
+                                {{ upload_file_list.length > 0 ? 'mdi-package-variant-closed' : 'mdi-cloud-upload-outline' }}
+                            </v-icon>
+
+                            <div v-if="upload_file_list.length === 0" class="mt-2">
+                                <div class="text-body-1 font-weight-medium">Drag &amp; drop files here</div>
+                                <div class="text-caption text-medium-emphasis mt-1">or click to browse</div>
+                            </div>
+
+                            <div v-else class="mt-2 w-100">
+                                <div class="text-body-2 font-weight-medium">
+                                    {{ upload_file_list.length }} file(s) selected
+                                    <span class="text-caption text-medium-emphasis">&middot; {{ formatSize(totalSelectedSize) }}</span>
+                                </div>
+                                <div class="d-flex flex-wrap ga-1 mt-2 justify-center">
+                                    <v-chip
+                                        v-for="(file, i) in upload_file_list"
+                                        :key="i"
+                                        size="small"
+                                        variant="outlined"
+                                        closable
+                                        @click.stop
+                                        @click:close="removeFile(i)"
+                                    >
+                                        {{ file.name }}
+                                    </v-chip>
+                                </div>
+                            </div>
+
+                            <input
+                                ref="fileInput"
+                                type="file"
+                                :accept="FILE_TYPES[repo_type]"
+                                multiple
+                                class="d-none"
+                                @change="onFileInputChange"
+                            />
+                        </div>
+                    </v-col>
                 </v-row>
                 <v-row>
                 <v-col cols="12">
@@ -124,11 +166,12 @@
                 dialog_error_messages: '',
                 overwrite: false,
                 isUploading: false,
+                isDragging: false,
 
-                upload_file_list: [],
+                upload_file_list: [] as File[],
                 uploads: [] as UploadItem[],
                 FILE_TYPES: {
-                    'deb': '.deb',
+                    'deb': '.deb,.ddeb',
                     'rpm': '.rpm',
                     'generic': '*'
                 },
@@ -137,11 +180,15 @@
         computed: {
             completedCount() {
                 return this.uploads.filter(u => u.phase === 'completed' || u.phase === 'failed').length;
+            },
+            totalSelectedSize() {
+                return this.upload_file_list.reduce((s: number, f: File) => s + f.size, 0);
             }
         },
         methods: {
             resetDialog() {
                 this.dialog_error_messages = '';
+                this.isDragging = false;
                 this.uploads = [];
                 logger.debug("Reset dialog");
             },
@@ -162,6 +209,26 @@
                 if (item.phase === 'failed') return 'error';
                 if (item.phase === 'processing') return 'orange';
                 return 'grey';
+            },
+            triggerFileInput() {
+                if (!this.isUploading) {
+                    (this.$refs.fileInput as HTMLInputElement).click();
+                }
+            },
+            onFileInputChange(event: Event) {
+                const input = event.target as HTMLInputElement;
+                if (input.files) {
+                    this.upload_file_list = Array.from(input.files);
+                }
+                input.value = '';
+            },
+            onDrop(event: DragEvent) {
+                this.isDragging = false;
+                if (this.isUploading || !event.dataTransfer) return;
+                this.upload_file_list = Array.from(event.dataTransfer.files);
+            },
+            removeFile(index: number) {
+                this.upload_file_list.splice(index, 1);
             },
             sleep(ms: number) {
                 return new Promise(resolve => setTimeout(resolve, ms));
@@ -267,5 +334,29 @@
 
 
     <style scoped>
-
-    </style>
+    .drop-zone {
+        border: 2px dashed rgba(var(--v-theme-on-surface), 0.25);
+        border-radius: 8px;
+        padding: 28px 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s, background-color 0.2s;
+    }
+    .drop-zone:hover {
+        border-color: rgb(var(--v-theme-primary));
+        background-color: rgba(var(--v-theme-primary), 0.04);
+    }
+    .drop-zone.drag-over {
+        border-color: rgb(var(--v-theme-primary));
+        background-color: rgba(var(--v-theme-primary), 0.08);
+    }
+    .drop-zone.has-files {
+        border-style: solid;
+        border-color: rgba(var(--v-theme-primary), 0.4);
+        cursor: default;
+        padding: 16px;
+    }
+    .drop-zone.has-files:hover {
+        background-color: transparent;
+    }
+</style>
