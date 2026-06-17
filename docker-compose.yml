@@ -1,5 +1,6 @@
 services:
   nginx:
+    build: .
     image: ghcr.io/opentreecz/openrepo:latest
     command: nginx
     restart: unless-stopped
@@ -11,6 +12,7 @@ services:
       - openrepo-data:/var/lib/openrepo
 
   django:
+    build: .
     image: ghcr.io/opentreecz/openrepo:latest
     expose:
       - "8000"
@@ -36,6 +38,7 @@ services:
       start_period: 30s
 
   worker:
+    build: .
     image: ghcr.io/opentreecz/openrepo:latest
     command: ./django/manage.py runworker
     volumes:
