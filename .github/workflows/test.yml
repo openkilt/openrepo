@@ -1,0 +1,51 @@
+name: Run Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  django-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y createrepo-c libapt-pkg-dev gpg
+          
+      - name: Install Django Dependencies
+        run: |
+          cd web
+          pip install -r requirements.txt
+          
+      - name: Run Django Tests
+        run: |
+          cd web
+          python manage.py test repo
+
+  cli-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install CLI Dependencies
+        run: |
+          cd cli
+          pip install -r requirements.txt responses
+          
+      - name: Run CLI Tests
+        run: |
+          cd cli
+          PYTHONPATH=. python tests/test_cli.py
