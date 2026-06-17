@@ -16,7 +16,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
 from rest_framework import status
-from .models import Repository, Package
+from repo.models import Repository, Package, PGPSigningKey
 from rest_framework.authtoken.models import Token
 from django.core.files.uploadedfile import SimpleUploadedFile
 import os
@@ -28,17 +28,28 @@ class RepoRestApiTestCase(APITestCase):
         # print("SETTING UP")
         # setup authentication
         User = get_user_model()
-        self.user = User.objects.create_user(username='matt',
+        self.user = User.objects.create_superuser(username='matt',
                                         email='matt@test.com',
                                         password='4242424242')
 
-        token = Token.objects.create(user=self.user)
+        token = Token.objects.get(user=self.user)
         self.api_key = token.key
 
         self.http_auth = f'Token {self.api_key}'
         self.headers = {'Authorization': f'Token {self.api_key}'}
 
         settings.STORAGE_PATH = "/tmp/openrepo_test"
+        if not os.path.exists(settings.STORAGE_PATH):
+            os.makedirs(settings.STORAGE_PATH)
+
+        # Create a dummy signing key as the app currently requires it during validation
+        self.signing_key = PGPSigningKey.objects.create(
+            name="Test Key",
+            email="test@example.com",
+            fingerprint="ABCDEF1234567890",
+            public_key_pem="dummy public",
+            private_key_pem="dummy private"
+        )
 
     def tearDown(self):
         pass
@@ -53,7 +64,8 @@ class RepoRestApiTestCase(APITestCase):
                                     {'repo_uid': REPO_UID,
                                      'repo_name': 'Test repo',
                                      'architecture': 'x86_64',
-                                     'repo_type': 'deb'},
+                                     'repo_type': 'deb',
+                                     'signing_key': self.signing_key.fingerprint},
                                     HTTP_AUTHORIZATION=self.http_auth,  format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -75,7 +87,8 @@ class RepoRestApiTestCase(APITestCase):
                                     {'repo_uid': REPO_UID,
                                      'repo_name': 'Test repo',
                                      'architecture': 'x86_64',
-                                     'repo_type': 'deb'},
+                                     'repo_type': 'deb',
+                                     'signing_key': self.signing_key.fingerprint},
                                     HTTP_AUTHORIZATION=self.http_auth,  format='json')
 
         upload_file_path = os.path.join(CUR_DIR, 'unittest_files/hello-world_1.0.0_all.deb')

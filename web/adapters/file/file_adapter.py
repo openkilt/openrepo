@@ -30,7 +30,7 @@ class GenericFileAdapter(RepoFileAdapter):
 
     def get_version(self):
         # Try finding the first "x.y.z" value from the filename to guess the version number
-        matches = re.findall('\d+\.\d+\.\d+', self.original_filename)
+        matches = re.findall(r'\d+\.\d+\.\d+', self.original_filename)
         if len(matches) > 0:
             return matches[0]
         return ""
