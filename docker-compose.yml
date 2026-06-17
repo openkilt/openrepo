@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   nginx:
-    image: openkilt/openrepo:latest
+    image: ghcr.io/openkilt/openrepo:feature-auto-build-docker
     command: nginx
     restart: unless-stopped
     ports:
@@ -21,7 +21,7 @@ services:
 
 
   django:
-    image: openkilt/openrepo:latest
+    image: test #ghcr.io/openkilt/openrepo:feature-auto-build-docker
     expose:
       - "8000"
     command: run_openrepoweb
@@ -47,7 +47,7 @@ services:
 
 
   worker:
-    image: openkilt/openrepo:latest
+    image: ghcr.io/openkilt/openrepo:feature-auto-build-docker
     command: ./django/manage.py runworker
     volumes:
       - ./openrepo-data:/var/lib/openrepo
@@ -72,7 +72,7 @@ services:
 
 
   db:
-    image: postgres:16.3-alpine3.20
+    image: postgres:16-alpine3.20
     expose:
       - "5432"
     restart: unless-stopped
