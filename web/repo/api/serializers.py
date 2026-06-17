@@ -94,8 +94,18 @@ class RepoDetailSerializer(serializers.HyperlinkedModelSerializer):
         if attrs['repo_uid'] in disallowed_names:
             raise serializers.ValidationError({'repo_uid': "Repo UID cannot be any of the following special words: " + ", ".join(disallowed_names)})
 
-        if attrs['signing_key'] is None or attrs['signing_key'] == '':
+        if attrs.get('signing_key') is None or attrs.get('signing_key') == '':
             raise serializers.ValidationError({'signing_key': "Signing key is required"})
+
+        promote_to = attrs.get('promote_to')
+        if promote_to:
+            conflict = Repository.objects.filter(promote_to=promote_to)
+            if self.instance:
+                conflict = conflict.exclude(pk=self.instance.pk)
+            if conflict.exists():
+                raise serializers.ValidationError(
+                    {'promote_to': f"Repo '{promote_to.repo_uid}' is already the promotion target of '{conflict.first().repo_uid}'"}
+                )
 
         return attrs
 
