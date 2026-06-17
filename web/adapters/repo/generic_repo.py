@@ -13,13 +13,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from .base_repo import BaseRepoAdapter
-from django.conf import settings
 
 
 class GenericRepoAdapter(BaseRepoAdapter):
     def _get_repo_instructions(self):
-        return f'{self.base_url}'
-
+        return f"{self.base_url}"
 
     def _generate_repo_structure(self, repo_path):
 

@@ -35,4 +35,3 @@ class RepoFileAdapter:
 
     def get_builddate(self):
         logger.warning("This function should never be called directly, only subclasses")
-

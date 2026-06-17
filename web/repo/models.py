@@ -12,9 +12,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from django.db import models
 import logging
+
 from django.contrib.auth.models import User
+from django.db import models
 
 logger = logging.getLogger("openrepo_web")
 
@@ -22,7 +23,7 @@ logger = logging.getLogger("openrepo_web")
 class PGPSigningKey(models.Model):
 
     def __str__(self):
-        return f'{self.name} <{self.email}> - {self.fingerprint[-16:]}'
+        return f"{self.name} <{self.email}> - {self.fingerprint[-16:]}"
 
     name = models.CharField(max_length=65536)
     email = models.CharField(max_length=2048)
@@ -36,12 +37,7 @@ class PGPSigningKey(models.Model):
 
 class Repository(models.Model):
 
-    REPO_TYPES = [
-        ('deb', 'Debian/APT'),
-        ('rpm', 'Red Hat/RPM'),
-        ('files', 'Generic Files')
-    ]
-
+    REPO_TYPES = [("deb", "Debian/APT"), ("rpm", "Red Hat/RPM"), ("files", "Generic Files")]
 
     class Meta:
         verbose_name_plural = "repositories"
@@ -101,8 +97,18 @@ class Package(models.Model):
         return self.package_uid.replace("-", "/")
 
     class Meta:
-        unique_together = (('package_uid', 'repo',),
-                           ('repo', 'package_name', 'architecture', 'version', ))
+        unique_together = (
+            (
+                "package_uid",
+                "repo",
+            ),
+            (
+                "repo",
+                "package_name",
+                "architecture",
+                "version",
+            ),
+        )
 
 
 class Mirror(models.Model):
@@ -116,28 +122,33 @@ class Build(models.Model):
 
     timestamp = models.DateTimeField(db_index=True, auto_now_add=True, blank=True)
 
-    STATUS_RUNNING = 'running'
-    STATUS_COMPLETE_SUCCESS = 'complete_success'
-    STATUS_COMPLETE_ERROR = 'complete_fail'
-    completion_status = models.CharField(default='running',
-                                         db_index=True,
-                                         max_length=128,
-                                         choices=[(STATUS_RUNNING, "Running"),
-                                                  (STATUS_COMPLETE_SUCCESS, "Completed Successfully"),
-                                                  (STATUS_COMPLETE_ERROR, "Failed")])
+    STATUS_RUNNING = "running"
+    STATUS_COMPLETE_SUCCESS = "complete_success"
+    STATUS_COMPLETE_ERROR = "complete_fail"
+    completion_status = models.CharField(
+        default="running",
+        db_index=True,
+        max_length=128,
+        choices=[
+            (STATUS_RUNNING, "Running"),
+            (STATUS_COMPLETE_SUCCESS, "Completed Successfully"),
+            (STATUS_COMPLETE_ERROR, "Failed"),
+        ],
+    )
 
     class Meta:
-        unique_together = ('repo', 'build_number',)
+        unique_together = (
+            "repo",
+            "build_number",
+        )
 
 
 class BuildLogLine(models.Model):
     build = models.ForeignKey(Build, db_index=True, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(db_index=True, auto_now_add=True, blank=True)
     command = models.TextField()
-    message = models.TextField(default='')
+    message = models.TextField(default="")
     loglevel = models.CharField(db_index=True, max_length=128)
     line_number = models.IntegerField(db_index=True)
     execution_time_sec = models.FloatField(blank=True, null=True)
     exec_complete = models.BooleanField(default=False)
-
-

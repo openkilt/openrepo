@@ -13,12 +13,14 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-from rest_framework.relations import HyperlinkedIdentityField
-from rest_framework.reverse import reverse
+import hashlib
+
+from django.shortcuts import get_object_or_404
 from django.urls import NoReverseMatch
 from django.utils.text import slugify
-from django.shortcuts import get_object_or_404
-import hashlib
+from rest_framework.relations import HyperlinkedIdentityField
+from rest_framework.reverse import reverse
+
 
 class ParameterisedHyperlinkedIdentityField(HyperlinkedIdentityField):
     """
@@ -27,10 +29,11 @@ class ParameterisedHyperlinkedIdentityField(HyperlinkedIdentityField):
     lookup_fields is a tuple of tuples of the form:
         ('model_field', 'url_parameter')
     """
-    lookup_fields = (('pk', 'pk'),)
+
+    lookup_fields = (("pk", "pk"),)
 
     def __init__(self, *args, **kwargs):
-        self.lookup_fields = kwargs.pop('lookup_fields', self.lookup_fields)
+        self.lookup_fields = kwargs.pop("lookup_fields", self.lookup_fields)
         super(ParameterisedHyperlinkedIdentityField, self).__init__(*args, **kwargs)
 
     def get_url(self, obj, view_name, request, format):
@@ -43,8 +46,8 @@ class ParameterisedHyperlinkedIdentityField(HyperlinkedIdentityField):
         kwargs = {}
         for model_field, url_param in self.lookup_fields:
             attr = obj
-            for field in model_field.split('.'):
-                attr = getattr(attr,field)
+            for field in model_field.split("."):
+                attr = getattr(attr, field)
             kwargs[url_param] = attr
 
         try:
@@ -54,13 +57,15 @@ class ParameterisedHyperlinkedIdentityField(HyperlinkedIdentityField):
 
         raise NoReverseMatch()
 
+
 class MultipleFieldLookupMixin:
     """
     Apply this mixin to any view or viewset to get multiple field filtering
     based on a `lookup_fields` attribute, instead of the default single field filtering.
     """
+
     def get_object(self):
-        queryset = self.get_queryset()             # Get the base queryset
+        queryset = self.get_queryset()  # Get the base queryset
         queryset = self.filter_queryset(queryset)  # Apply any filter backends
         filter = {}
         for field in self.lookup_fields:
@@ -68,12 +73,11 @@ class MultipleFieldLookupMixin:
             if "__" in field:
                 actual_field = field.split("__")[1]
                 filter[field] = self.kwargs[actual_field]
-            elif self.kwargs[field]: # Ignore empty fields.
+            elif self.kwargs[field]:  # Ignore empty fields.
                 filter[field] = self.kwargs[field]
         obj = get_object_or_404(queryset, **filter)  # Lookup the object
         self.check_object_permissions(self.request, obj)
         return obj
-
 
 
 def reduce_to_uid(full_name):
@@ -86,11 +90,12 @@ def reduce_to_uid(full_name):
     cleaned = slugify(full_name)
     return cleaned
 
+
 def compute_sha512(filepath):
     BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
     sha512 = hashlib.sha512()
 
-    with open(filepath, 'rb') as f:
+    with open(filepath, "rb") as f:
         while True:
             data = f.read(BUF_SIZE)
             if not data:
