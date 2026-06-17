@@ -16,6 +16,8 @@ import pytz
 import rest_framework.exceptions
 from django.contrib.auth.models import User
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from django.http import HttpResponse
 from datetime import datetime
 from rest_framework.response import Response
 from .filters import BuildFilter, BuildLogFilter
@@ -110,6 +112,14 @@ class PGPKeysViewSet(viewsets.ModelViewSet):
 
         self.perform_destroy(instance)
         return Response(status=rest_framework.status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'])
+    def download(self, request, fingerprint=None):
+        key = self.get_object()
+        filename = f"{key.fingerprint[-16:]}.asc"
+        response = HttpResponse(key.public_key_pem, content_type='application/pgp-keys')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
 class WhoAmIViewSet(rest_framework.mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     serializer_class = UserDetailSerializer

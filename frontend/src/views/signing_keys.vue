@@ -36,6 +36,16 @@
 
                 <v-col  align="right" sm="3">
 
+                    <v-btn
+                      variant="text" icon color="primary"
+                      :href="downloadUrl(pgp_key.fingerprint)"
+                      target="_blank"
+                      aria-label="Download public key"
+                    >
+                        <v-icon>mdi-download</v-icon>
+                        <v-tooltip activator="parent" location="top">Download public key</v-tooltip>
+                    </v-btn>
+
                     <v-dialog v-model="dialog_delete" max-width="400">
                         <template v-slot:activator="{ props }">
                             <v-btn @click="resetDialog()" v-bind="props" variant="text" icon color="error"
@@ -175,6 +185,9 @@ export default {
             this.dialog_newkey_isidle = true;
             this.dialog_create_key_data.name = '';
             this.dialog_create_key_data.email = '';
+        },
+        downloadUrl(fingerprint: string) {
+            return `/api/signingkeys/${fingerprint}/download/`;
         },
         loadPgpKeys() {
             this.loading = true;
