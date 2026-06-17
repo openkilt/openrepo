@@ -3,22 +3,24 @@ import 'vuetify/styles'
 
 import { createVuetify } from 'vuetify'
 
+const savedTheme = typeof localStorage !== 'undefined' ? localStorage.getItem('openrepo_theme') : null;
+
 export default createVuetify({
   theme: {
-    defaultTheme: 'openRepoLight',
+    defaultTheme: savedTheme || 'openRepoLight',
     themes: {
       openRepoLight: {
         dark: false,
         colors: {
           background: '#F5F5F5',
           surface: '#FFFFFF',
-          primary: '#1565C0',
-          secondary: '#00897B',
-          accent: '#7C4DFF',
-          error: '#E53935',
-          info: '#039BE5',
-          success: '#43A047',
-          warning: '#FB8C00',
+          primary: '#3B6CB7',
+          secondary: '#4E8A7B',
+          accent: '#7E6B9E',
+          error: '#C94A4A',
+          info: '#3686B3',
+          success: '#4A8C6A',
+          warning: '#BD863C',
         }
       },
       openRepoDark: {
@@ -26,13 +28,13 @@ export default createVuetify({
         colors: {
           background: '#121212',
           surface: '#1E1E1E',
-          primary: '#42A5F5',
-          secondary: '#4DB6AC',
-          accent: '#B388FF',
-          error: '#EF5350',
-          info: '#29B6F6',
-          success: '#66BB6A',
-          warning: '#FFA726',
+          primary: '#7BA3D4',
+          secondary: '#7DB8A8',
+          accent: '#B09FD4',
+          error: '#D46969',
+          info: '#5D99C4',
+          success: '#6DAE89',
+          warning: '#CCA04A',
         }
       }
     }
