@@ -17,6 +17,7 @@ http {
     sendfile on;
     tcp_nopush on;
     types_hash_max_size 2048;
+    client_body_temp_path /tmp/nginx_client_body 1 2;
 
 
     keepalive_timeout  65;

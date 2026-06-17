@@ -14,6 +14,7 @@
 
 from django.db import models
 import logging
+import uuid
 from django.contrib.auth.models import User
 
 logger = logging.getLogger("openrepo_web")
@@ -139,5 +140,20 @@ class BuildLogLine(models.Model):
     line_number = models.IntegerField(db_index=True)
     execution_time_sec = models.FloatField(blank=True, null=True)
     exec_complete = models.BooleanField(default=False)
+
+
+class UploadTask(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    repo = models.ForeignKey(Repository, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, default='uploading')
+    filename = models.CharField(max_length=65536)
+    filesize = models.BigIntegerField(default=0)
+    overwrite = models.BooleanField(default=False)
+    stored_path = models.CharField(max_length=65536)
+    sha512 = models.CharField(max_length=512, blank=True)
+    error_message = models.TextField(blank=True)
+    result_data = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
 
 

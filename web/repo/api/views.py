@@ -23,15 +23,17 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from .serializers import UserSerializer, UserDetailSerializer, RepoSummarySerializer, \
                         PackageSummarySerializer, RepoDetailSerializer, PackageDetailSerializer, \
-                        UploadSerializer, PGPKeySerializer, CopySerializer, BuildSerializer, BuildLogSerializer
+                        UploadSerializer, UploadTaskSerializer, PGPKeySerializer, CopySerializer, BuildSerializer, BuildLogSerializer
 from repo.storage.filemanager import RepoFileManager
 from repo.storage.keyring import PGPKeyring
-from adapters.file import create_adapter
-from repo.models import Package, Repository, PGPSigningKey, Build, BuildLogLine
+from repo.models import Package, UploadTask, Repository, PGPSigningKey, Build, BuildLogLine
 from django.conf import settings
 from django.core.validators import validate_email
-from .util import MultipleFieldLookupMixin, reduce_to_uid, compute_sha512
+from .util import MultipleFieldLookupMixin, reduce_to_uid
+from .upload_processor import process_upload
 import os
+import threading
+import hashlib
 import logging
 
 logger = logging.getLogger("openrepo_web")
@@ -246,24 +248,14 @@ class CopyViewSet(viewsets.ViewSet):
 class UploadViewSet(viewsets.ViewSet):
     serializer_class = UploadSerializer
 
-    # def list(self, request):
-    #     return Response("GET API")
-
     def create(self, request, repo_uid):
         repo = Repository.objects.get(repo_uid=repo_uid)
 
-        # Since DRF does not know that this "create" is associated with a repo, we have to tell it explicitly
-        # to check object permissions
         self.check_object_permissions(request, repo)
 
         file_uploaded = request.FILES.get('package_file')
         overwrite_str = request.POST.get('overwrite', '0').lower()
-        if overwrite_str == 'true' or overwrite_str == '1' or overwrite_str == 'yes':
-            overwrite = True
-        else:
-            overwrite = False
-
-        #print(vars(file_uploaded))
+        overwrite = overwrite_str in ('true', '1', 'yes')
         filesize = file_uploaded.size
         filename = file_uploaded.name
 
@@ -271,62 +263,41 @@ class UploadViewSet(viewsets.ViewSet):
         stored_filename = file_manager.get_filepath()
         full_stored_filepath = os.path.join(settings.STORAGE_PATH, stored_filename)
 
+        os.makedirs(os.path.dirname(full_stored_filepath), exist_ok=True)
+
+        sha512_hash = hashlib.sha512()
         with open(full_stored_filepath, 'wb') as outf:
             logger.debug(f"Writing file to {full_stored_filepath}")
             for chunk in file_uploaded.chunks():
                 outf.write(chunk)
+                sha512_hash.update(chunk)
 
+        sha512 = sha512_hash.hexdigest()
+
+        task = UploadTask.objects.create(
+            repo=repo,
+            status='stored',
+            filename=filename,
+            filesize=filesize,
+            overwrite=overwrite,
+            stored_path=full_stored_filepath,
+            sha512=sha512,
+        )
+
+        thread = threading.Thread(target=process_upload, args=(task.pk,))
+        thread.start()
+
+        return Response({'task_id': task.pk}, status=202)
+
+
+class UploadStatusView(viewsets.ViewSet):
+
+    def retrieve(self, request, task_id):
         try:
-            file_info_adapter = create_adapter(repo.repo_type, full_stored_filepath, filename)
+            task = UploadTask.objects.get(pk=task_id)
+        except UploadTask.DoesNotExist:
+            raise rest_framework.exceptions.NotFound("Upload task not found")
 
-            if file_info_adapter is None:
-                raise rest_framework.exceptions.ParseError("Error determining file type from repo")
-        except:
-            os.remove(full_stored_filepath)
-            raise rest_framework.exceptions.ParseError("Error processing uploaded file")
-
-        if Package.objects.filter(repo=repo, package_name=file_info_adapter.get_name(),
-                                  architecture=file_info_adapter.get_architecture(),
-                                  version=file_info_adapter.get_version()).count() > 0:
-
-            if overwrite:
-                Package.objects.get(repo=repo, package_name=file_info_adapter.get_name(),
-                                  architecture=file_info_adapter.get_architecture(),
-                                  version=file_info_adapter.get_version()).delete()
-            else:
-                raise rest_framework.exceptions.ParseError(f"Package {file_info_adapter.get_name()} version {file_info_adapter.get_version()} "
-                                                       f"already exists in destination repo {repo_uid} and 'overwrite' is not specified")
-
-        # Check if this package (with the same checksum) has already been uploaded in another repo.  If so,
-        # copy the entry rather than save a new file
-        sha512 = compute_sha512(full_stored_filepath)
-        existing_pkg = Package.objects.filter(checksum_sha512=sha512).exclude(repo=repo).all()
-        if len(existing_pkg) > 0:
-            package = existing_pkg[0]
-            logger.debug(f"Copying existing entry {package.package_uid}")
-            package.pk = None
-            os.unlink(full_stored_filepath)
-        else:
-            package = Package()
-            package.package_uid = stored_filename.replace("/", "-")
-
-        package.repo = repo
-        package.upload_date = datetime.now(tz=pytz.utc)
-        package.filename = filename
-        package.build_date = file_info_adapter.get_builddate()
-        package.architecture = file_info_adapter.get_architecture()
-        package.version = file_info_adapter.get_version()
-        package.package_name = file_info_adapter.get_name()
-        package.checksum_sha512 = sha512
-        package.save()
-
-        if repo.keep_only_latest:
-            # Delete all older versions of this package if "keep only latest" is set
-            Package.objects.filter(repo=repo, package_name=package.package_name).exclude(pk=package.pk).delete()
-
-        serializer = PackageDetailSerializer(package)
-        response = serializer.data
-        # TODO: Process the file here and respond with the new package info via the package serializer
-        #response = f"POST API {repo_uid} and you have uploaded a {content_type} file"
-        return Response(response)
+        serializer = UploadTaskSerializer(task, context={'request': request})
+        return Response(serializer.data)
 

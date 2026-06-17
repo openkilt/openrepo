@@ -15,7 +15,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from adapters.repo import get_repo_adapter
-from repo.models import Repository, Package, PGPSigningKey, Build, BuildLogLine
+from repo.models import Repository, Package, PGPSigningKey, Build, BuildLogLine, UploadTask
 from .util import ParameterisedHyperlinkedIdentityField
 import string
 
@@ -146,6 +146,11 @@ class UploadSerializer(serializers.Serializer):
     package_file = serializers.FileField()
     class Meta:
         fields = ['package_file']
+
+class UploadTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UploadTask
+        fields = ['id', 'status', 'filename', 'filesize', 'error_message', 'result_data', 'created_at', 'completed_at']
 
 
 class BuildSerializer(serializers.ModelSerializer):
