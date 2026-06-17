@@ -19,6 +19,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from django.http import HttpResponse
 from datetime import datetime
+from django.db.models.functions import Lower
 from rest_framework.response import Response
 from .filters import BuildFilter, BuildLogFilter
 from django_filters.rest_framework import DjangoFilterBackend
@@ -167,6 +168,24 @@ class PackagesViewSet(viewsets.ModelViewSet):
         """
         repo_uid = self.kwargs['repo_uid']
         return Package.objects.filter(repo__repo_uid=repo_uid)
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        ordering = self.request.query_params.get('ordering')
+        if ordering:
+            parts = ordering.split(',')
+            new_parts = []
+            for part in parts:
+                if part.lstrip('-') == 'package_name':
+                    if part.startswith('-'):
+                        new_parts.append(Lower('package_name').desc())
+                    else:
+                        new_parts.append(Lower('package_name').asc())
+                else:
+                    new_parts.append(part)
+            if new_parts:
+                queryset = queryset.order_by(*new_parts)
+        return queryset
 
 class PackageViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     """
