@@ -6,8 +6,15 @@ services:
     restart: unless-stopped
     ports:
       - "7376:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
-      - "django"
+      django:
+        condition: service_healthy
     volumes:
       - ./openrepo-data:/var/lib/openrepo
 
@@ -19,6 +26,12 @@ services:
       - "8000"
     command: run_openrepoweb
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     volumes:
       - ./openrepo-data:/var/lib/openrepo
     environment:
@@ -39,6 +52,12 @@ services:
     volumes:
       - ./openrepo-data:/var/lib/openrepo
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'manage.py runworker' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     environment:
       - OPENREPO_DB_TYPE=postgresql
       - OPENREPO_PG_DATABASE=openrepo
