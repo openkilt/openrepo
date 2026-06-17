@@ -24,118 +24,120 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Allow local overrides of settings for debug/dev
 try:
-    from .settings_local import *
-except:
+    from .settings_local import *  # noqa: F401, F403
+except ImportError:
     pass
 
 
-OPENREPO_VAR_DIR = os.getenv('OPENREPO_VAR_DIR', '/var/lib/openrepo/')
+OPENREPO_VAR_DIR = os.getenv("OPENREPO_VAR_DIR", "/var/lib/openrepo/")
 DOMAIN_NAME = os.getenv("OPENREPO_DOMAIN", "localhost:8080")
 
 _ignore_build_num_str = os.getenv("RPM_VERSION_IGNORE_BUILD_NUM", "false").lower()
-RPM_VERSION_IGNORE_BUILD_NUM = _ignore_build_num_str != "false" and _ignore_build_num_str != "0" and _ignore_build_num_str != "no"
+RPM_VERSION_IGNORE_BUILD_NUM = (
+    _ignore_build_num_str != "false" and _ignore_build_num_str != "0" and _ignore_build_num_str != "no"
+)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-s8-h-mhty&_oa)qouzm!_$8s3$yn_u4x$7q$gh7o66cd=3&o_h'
+SECRET_KEY = "django-insecure-s8-h-mhty&_oa)qouzm!_$8s3$yn_u4x$7q$gh7o66cd=3&o_h"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("OPENREPO_DEBUG", "FALSE").upper() == "TRUE"
 
 if os.getenv("OPENREPO_SECURE_HOSTS", "FALSE").upper() == "TRUE":
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', DOMAIN_NAME]
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", DOMAIN_NAME]
 else:
     # For additional security, consider enabling this security feature
     # https://security.stackexchange.com/questions/45687/what-does-djangos-allowed-hosts-variable-actually-do
-    ALLOWED_HOSTS = ['*']
+    ALLOWED_HOSTS = ["*"]
 
 # Added CSRF support through a reverse proxy with different hostname. https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-CSRF_TRUSTED_ORIGINS
 # Origins are space delimited
-if os.getenv("OPENREPO_CSRF_TRUSTED_ORIGINS") :
-    CSRF_TRUSTED_ORIGINS = os.getenv("OPENREPO_CSRF_TRUSTED_ORIGINS").split(' ')
+if os.getenv("OPENREPO_CSRF_TRUSTED_ORIGINS"):
+    CSRF_TRUSTED_ORIGINS = os.getenv("OPENREPO_CSRF_TRUSTED_ORIGINS").split(" ")
 else:
     CSRF_TRUSTED_ORIGINS = []
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django_filters',
-    'widget_tweaks',
-    'repo',
-    'rest_framework',
-    'rest_framework.authtoken'
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django_filters",
+    "widget_tweaks",
+    "repo",
+    "rest_framework",
+    "rest_framework.authtoken",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'openrepo.urls'
+ROOT_URLCONF = "openrepo.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'repo', 'templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [os.path.join(BASE_DIR, "repo", "templates")],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'openrepo.wsgi.application'
+WSGI_APPLICATION = "openrepo.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-db_type = os.getenv('OPENREPO_DB_TYPE', 'sqlite')
-if db_type == 'sqlite':
+db_type = os.getenv("OPENREPO_DB_TYPE", "sqlite")
+if db_type == "sqlite":
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(OPENREPO_VAR_DIR, 'db.sqlite3'),
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.path.join(OPENREPO_VAR_DIR, "db.sqlite3"),
         }
     }
-elif db_type == 'postgresql':
+elif db_type == "postgresql":
 
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv("OPENREPO_PG_DATABASE", "openrepo"),
-            'USER': os.getenv("OPENREPO_PG_USERNAME", "postgres"),
-            'PASSWORD': os.getenv("OPENREPO_PG_PASSWORD", "postgres"),
-            'HOST': os.getenv("OPENREPO_PG_HOSTNAME", "localhost"),
-            'PORT': os.getenv("OPENREPO_PG_PORT", "5432"),
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("OPENREPO_PG_DATABASE", "openrepo"),
+            "USER": os.getenv("OPENREPO_PG_USERNAME", "postgres"),
+            "PASSWORD": os.getenv("OPENREPO_PG_PASSWORD", "postgres"),
+            "HOST": os.getenv("OPENREPO_PG_HOSTNAME", "localhost"),
+            "PORT": os.getenv("OPENREPO_PG_PORT", "5432"),
         }
     }
 else:
@@ -146,19 +148,19 @@ else:
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 6,
-        }
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 6,
+        },
     },
     # {
     #     'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     # },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -166,9 +168,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -180,7 +182,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 if DEBUG:
     STATICFILES_DIRS = [
         BASE_DIR / "static",
@@ -191,68 +193,58 @@ else:
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/admin/login/'
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/admin/login/"
 
 REST_FRAMEWORK = {
-
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        'repo.api.authentication.CsrfExemptSessionAuthentication'
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "repo.api.authentication.CsrfExemptSessionAuthentication",
     ],
-    'URL_FIELD_NAME': 'href',
-
+    "URL_FIELD_NAME": "href",
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        #'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-        #'rest_framework.permissions.IsAuthenticated'
-        'repo.api.authentication.CustomOpenRepoPermission'
+    "DEFAULT_PERMISSION_CLASSES": [
+        # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+        # 'rest_framework.permissions.IsAuthenticated'
+        "repo.api.authentication.CustomOpenRepoPermission"
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 2000
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 2000,
 }
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"},
+        "simple": {"format": "%(levelname)s %(module)s:%(lineno)d: %(message)s"},
+    },
+    "handlers": {
+        "console": {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "simple"},
+    },
+    "loggers": {
+        "openrepo_web": {
+            "handlers": ["console"],
+            "level": os.getenv("OPENREPO_LOGLEVEL", "INFO"),
+            "propagate": True,
         },
-        'simple': {
-            'format': '%(levelname)s %(module)s:%(lineno)d: %(message)s'
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
         },
     },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple'
-        },
-    },
-    'loggers': {
-        'openrepo_web': {
-            'handlers': ['console'],
-            'level': os.getenv('OPENREPO_LOGLEVEL', 'INFO'),
-            'propagate': True,
-        },
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-    }
 }
 
 
-STORAGE_PATH = os.path.join(OPENREPO_VAR_DIR, 'packages/')
-DEB_DB_PATH = os.path.join(OPENREPO_VAR_DIR, 'debcache.db')
-RPM_CACHE_DIR = os.path.join(OPENREPO_VAR_DIR, 'rpmcache/')
-KEYRING_PATH = os.path.join(OPENREPO_VAR_DIR, 'keyring/')
-REPO_WWW_PATH = os.path.join(OPENREPO_VAR_DIR, 'www/')
+STORAGE_PATH = os.path.join(OPENREPO_VAR_DIR, "packages/")
+DEB_DB_PATH = os.path.join(OPENREPO_VAR_DIR, "debcache.db")
+RPM_CACHE_DIR = os.path.join(OPENREPO_VAR_DIR, "rpmcache/")
+KEYRING_PATH = os.path.join(OPENREPO_VAR_DIR, "keyring/")
+REPO_WWW_PATH = os.path.join(OPENREPO_VAR_DIR, "www/")
 
 # The character length of the folder prefix for storing files (e.g., a prefix of two would yield aa, ab, ac, etc)
 STORAGE_PREFIX_DEPTH = 2
@@ -260,5 +252,4 @@ STORAGE_PREFIX_DEPTH = 2
 STORAGE_FILENAME_LENGTH = 32
 
 # In case a repo creation gets frozen in bg worker, this will allow it to reattempt
-REPO_CREATE_TIMEOUT_SEC = 60*60*2
-
+REPO_CREATE_TIMEOUT_SEC = 60 * 60 * 2
