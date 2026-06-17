@@ -38,10 +38,11 @@ class RepoSummarySerializer(serializers.HyperlinkedModelSerializer):
                                                 read_only=True)
     href_packages = ParameterisedHyperlinkedIdentityField(view_name='package-list', lookup_fields=([ ('repo_uid', 'repo_uid')]),
                                                 read_only=True)
+    promote_to = serializers.SlugRelatedField(slug_field='repo_uid', read_only=True, allow_null=True)
 
     class Meta:
         model = Repository
-        fields = ['href_repo', 'href_packages', 'repo_uid', 'repo_type', 'package_count', 'last_updated']
+        fields = ['href_repo', 'href_packages', 'repo_uid', 'repo_type', 'package_count', 'last_updated', 'promote_to']
 
 class PGPKeySerializer(serializers.HyperlinkedModelSerializer):
 
@@ -106,6 +107,16 @@ class RepoDetailSerializer(serializers.HyperlinkedModelSerializer):
                 raise serializers.ValidationError(
                     {'promote_to': f"Repo '{promote_to.repo_uid}' is already the promotion target of '{conflict.first().repo_uid}'"}
                 )
+
+            # Prevent circular promotion chains
+            if self.instance:
+                current = promote_to
+                while current is not None:
+                    if current.pk == self.instance.pk:
+                        raise serializers.ValidationError(
+                            {'promote_to': f"Setting promote_to to '{promote_to.repo_uid}' would create a circular promotion chain"}
+                        )
+                    current = current.promote_to
 
         return attrs
 
