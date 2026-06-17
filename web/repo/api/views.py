@@ -171,7 +171,7 @@ class BuildViewSet(rest_framework.mixins.ListModelMixin,
     """
     API endpoint that allows groups to be viewed or edited.
     """
-    queryset = Build.objects.all()
+    queryset = Build.objects.all().order_by('build_number')
     serializer_class = BuildSerializer
 
     filter_backends = [DjangoFilterBackend]
