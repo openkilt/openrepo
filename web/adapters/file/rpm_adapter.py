@@ -30,7 +30,7 @@ class RpmFileAdapter(RepoFileAdapter):
             for header in headers_titles:
                 value = rpm.headers.get(header)
                 if isinstance(value, bytes):
-                    value = value.decode()
+                    value = value.decode('utf-8', errors='replace')
                 if header == "buildtime":
                     value = datetime.fromtimestamp(value).strftime("%c")
                 if header == "description":
