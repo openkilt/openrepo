@@ -19,6 +19,7 @@ import subprocess
 import time
 
 from django.conf import settings
+from django.db.models import F
 
 from repo.models import Build, BuildLogLine, Package, Repository
 from repo.storage.keyring import PGPKeyring
@@ -190,10 +191,9 @@ class BaseRepoAdapter:
 
         self.packages = Package.objects.filter(repo__repo_uid=self.repo_uid)
 
-        # First increment the count for this repo
+        # Atomically increment refresh_count and re-fetch to get the assigned value
+        Repository.objects.filter(repo_uid=self.repo_uid).update(refresh_count=F("refresh_count") + 1)
         repo_db_obj = Repository.objects.get(repo_uid=self.repo_uid)
-        repo_db_obj.refresh_count = repo_db_obj.refresh_count + 1
-        repo_db_obj.save()
 
         self.log_number = 0
         self.build = Build()
