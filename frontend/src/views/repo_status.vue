@@ -37,6 +37,9 @@
 
                             <v-col  class="text-right  " cols="6">
                                 {{this.build_summary.num_errors}} errors and {{this.build_summary.num_warnings}} warnings
+                                <span v-if="build_details.total_duration_sec" class="ml-3 text-caption">
+                                    {{ (build_details.total_duration_sec * 1000).toFixed(0) }} ms
+                                </span>
                             </v-col>
 
                     </v-layout>

@@ -123,6 +123,8 @@ class Build(models.Model):
                                                   (STATUS_COMPLETE_SUCCESS, "Completed Successfully"),
                                                   (STATUS_COMPLETE_ERROR, "Failed")])
 
+    total_duration_sec = models.FloatField(blank=True, null=True)
+
     class Meta:
         unique_together = ('repo', 'build_number',)
 

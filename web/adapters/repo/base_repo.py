@@ -199,6 +199,7 @@ class BaseRepoAdapter:
         self.build.completion_status = Build.STATUS_RUNNING
         self.build.save()
 
+        build_start_time = time.time()
         success = False
         try:
             # Format is repo_uid.refresh_count with 9 digits of 0 padding
@@ -225,6 +226,7 @@ class BaseRepoAdapter:
 
             if success:
                 self.build.completion_status = Build.STATUS_COMPLETE_SUCCESS
+                self.build.total_duration_sec = time.time() - build_start_time
                 self.build.save()
                 with self._buildlog_section(f"Updating repo symlink to point to {dirname}") as log_entry:
                     repo_uid_symlink = os.path.join(settings.REPO_WWW_PATH, self.repo_uid)
@@ -246,6 +248,7 @@ class BaseRepoAdapter:
             self.build.completion_status = Build.STATUS_COMPLETE_SUCCESS
         else:
             self.build.completion_status = Build.STATUS_COMPLETE_ERROR
+        self.build.total_duration_sec = time.time() - build_start_time
         self.build.save()
 
         return success

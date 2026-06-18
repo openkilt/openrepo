@@ -157,7 +157,7 @@ class BuildSerializer(serializers.ModelSerializer):
     repo_uid = serializers.CharField(source='repo.repo_uid')
     class Meta:
         model = Build
-        fields = ['repo_uid', 'timestamp', 'build_number', 'completion_status']
+        fields = ['repo_uid', 'timestamp', 'build_number', 'completion_status', 'total_duration_sec']
 
 class BuildLogSerializer(serializers.ModelSerializer):
     build = serializers.SlugRelatedField(slug_field='build_number', queryset=Build.objects.all(), required=False, allow_null=True)
