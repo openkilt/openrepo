@@ -1,5 +1,7 @@
 # openrepo
 
+![OpenRepo Logo](web/repo/static/repo/openrepo_logo2.png)
+
 OpenRepo is a web-based server for managing and hosting repositories containing Debian apt/deb, Redhat rpm, and generic package files.
 
 The server supports:
