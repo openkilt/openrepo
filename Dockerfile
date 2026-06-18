@@ -45,6 +45,8 @@ ENV PATH="/venv/bin:$PATH"
 COPY --from=vue-builder /build/openrepo/dist /app/frontend-dist
 
 # Copy Django app
+COPY web/repo/templates/base.html /tmp/base.html.check
+RUN echo "=== BASE.HTML AT BUILD TIME ===" && cat /tmp/base.html.check && echo "=== END ==="
 COPY web /app/django
 
 # Copy Nginx configuration
