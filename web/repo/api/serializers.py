@@ -91,7 +91,9 @@ class RepoDetailSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError(
                 {'repo_uid': 'repo_uid may only contain alphanumeric characters, dashes, and underscores'})
 
-        disallowed_names = ["back", "api", "admin", "api-auth", "static"]
+        disallowed_names = ["back", "api", "admin", "api-auth", "static",
+                            "users", "repos", "signingkeys", "builds", "buildlogs",
+                            "whoami", "upload-status"]
         if attrs['repo_uid'] in disallowed_names:
             raise serializers.ValidationError({'repo_uid': "Repo UID cannot be any of the following special words: " + ", ".join(disallowed_names)})
 
