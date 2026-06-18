@@ -95,7 +95,7 @@ class RepoDetailSerializer(serializers.HyperlinkedModelSerializer):
         if attrs['repo_uid'] in disallowed_names:
             raise serializers.ValidationError({'repo_uid': "Repo UID cannot be any of the following special words: " + ", ".join(disallowed_names)})
 
-        if attrs.get('signing_key') is None or attrs.get('signing_key') == '':
+        if self.instance is None and (attrs.get('signing_key') is None or attrs.get('signing_key') == ''):
             raise serializers.ValidationError({'signing_key': "Signing key is required"})
 
         promote_to = attrs.get('promote_to')
