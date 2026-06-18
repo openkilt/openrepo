@@ -142,7 +142,7 @@
           })
           .catch(e => {
               logger.debug(e);
-              show_global_error_msg = "Error retrieving user information";
+              this.show_global_error_msg = "Error retrieving user information";
 
           });
       },
