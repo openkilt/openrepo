@@ -140,9 +140,7 @@ class PackageDetailSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class CopySerializer(serializers.Serializer):
-    package_file = serializers.FileField()
-    class Meta:
-        fields = ['dest_repo_uid']
+    dest_repo_uid = serializers.CharField()
 
 class UploadSerializer(serializers.Serializer):
     package_file = serializers.FileField()
