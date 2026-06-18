@@ -219,7 +219,7 @@ import DialogUploadPackages from "@/components/dialog_upload_packages.vue"
 import SystemMessage from '@/components/system_message.vue'
 import {logger} from '@/logger.ts'
 import {waitFor} from '@/utils.ts'
-import semver from 'semver'
+import {formatDate, flagPromotables, buildQueryParams} from '@/utils/packages.ts'
 import { mapState } from 'vuex'
 
 export default {
@@ -289,52 +289,11 @@ export default {
             });
         },
         format_date(value:Date) {
-            const d = new Date(value);
-            const pad = (n: number) => n.toString().padStart(2, '0');
-            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+            return formatDate(value);
         },
         flagPromotables(pkgs_here: Array<any>, pkgs_promote: Array<any>)
         {
-            let highest_promotes = {}
-
-            pkgs_promote.forEach(pkg => {
-                try {
-                    let cur_ver = semver.coerce(pkg.version, true);
-                    if (cur_ver == null)
-                        return;
-
-                    if (highest_promotes[pkg.package_name] === undefined)
-                    {
-                        highest_promotes[pkg.package_name] = cur_ver;
-                    }
-                    if (semver.gt(cur_ver, highest_promotes[pkg.package_name], true))
-                    {
-                        highest_promotes[pkg.package_name] = cur_ver;
-                    }
-                } catch (error)
-                {
-                    logger.warn(error);
-                }
-            }, this)
-
-            pkgs_here.forEach(pkg => {
-                let cur_ver = semver.coerce(pkg.version, true);
-                if (highest_promotes[pkg.package_name] === undefined ||
-                    semver.gt(cur_ver, highest_promotes[pkg.package_name], true))
-                {
-                    pkg.promotable = true;
-                    logger.debug("Promotable package: " + pkg.package_name);
-                }
-                else
-                {
-                    pkg.promotable = false;
-                }
-            }, this)
-
-            this.packages = pkgs_here;
-        },
-        copyRepoInstructionsToClipboard () {
-            navigator.clipboard.writeText(this.repo_details.repo_instructions);
+            this.packages = flagPromotables(pkgs_here, pkgs_promote);
         },
         toggleSort(column: string) {
             if (this.sortColumn === column) {
@@ -351,12 +310,7 @@ export default {
             return this.sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down';
         },
         buildParams(extra?: any) {
-            let params: any = { page: this.page, page_size: this.itemsPerPage };
-            if (this.search) params.search = this.search;
-            const dir = this.sortDirection === 'desc' ? '-' : '';
-            params.ordering = dir + this.sortColumn;
-            if (extra) Object.assign(params, extra);
-            return params;
+            return buildQueryParams(this.page, this.itemsPerPage, this.search, this.sortColumn, this.sortDirection, extra);
         },
         fetchPage(newPage?: number) {
           this.loading = true;
