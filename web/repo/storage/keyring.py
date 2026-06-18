@@ -22,7 +22,9 @@ class PGPKeyring:
 
     def __init__(self):
         if not os.path.isdir(settings.KEYRING_PATH):
-            os.makedirs(settings.KEYRING_PATH)
+            os.makedirs(settings.KEYRING_PATH, mode=0o700, exist_ok=True)
+        else:
+            os.chmod(settings.KEYRING_PATH, 0o700)
 
         # Weird backport behavior with arguments
         # https://stackoverflow.com/questions/35028852/how-to-set-the-gnupg-home-directory-within-the-gnupg-python-binding

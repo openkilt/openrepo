@@ -23,9 +23,10 @@ RUN python3 -m venv /venv && \
 # Stage 3: Production runtime image
 FROM ubuntu:24.04
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-utils \
     createrepo-c \
     curl \
-    gpg \
+    gnupg \
     gzip \
     libapt-pkg6.0 \
     libpq5 \
