@@ -107,11 +107,6 @@ class Package(models.Model):
                            ('repo', 'package_name', 'architecture', 'version', ))
 
 
-class Mirror(models.Model):
-    # Don't allow the repo to be deleted without first deleting the mirror(s)
-    repo = models.ForeignKey(Repository, on_delete=models.PROTECT)
-
-
 class Build(models.Model):
     repo = models.ForeignKey(Repository, db_index=True, on_delete=models.CASCADE)
     build_number = models.BigIntegerField(db_index=True)
