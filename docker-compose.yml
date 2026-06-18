@@ -40,7 +40,7 @@ services:
       - OPENREPO_DB_TYPE=postgresql
       - OPENREPO_PG_DATABASE=openrepo
       - OPENREPO_PG_USERNAME=postgres
-      - OPENREPO_PG_PASSWORD=postgres
+      - OPENREPO_PG_PASSWORD=${OPENREPO_PG_PASSWORD:-postgres}
       - OPENREPO_PG_HOSTNAME=db
     depends_on:
       db:
@@ -64,7 +64,7 @@ services:
       - OPENREPO_DB_TYPE=postgresql
       - OPENREPO_PG_DATABASE=openrepo
       - OPENREPO_PG_USERNAME=postgres
-      - OPENREPO_PG_PASSWORD=postgres
+      - OPENREPO_PG_PASSWORD=${OPENREPO_PG_PASSWORD:-postgres}
       - OPENREPO_PG_HOSTNAME=db
     depends_on:
       db:
@@ -84,7 +84,7 @@ services:
       timeout: 5s
       retries: 5
     environment:
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${OPENREPO_PG_PASSWORD:-postgres}
       - POSTGRES_USER=postgres
       - POSTGRES_DB=openrepo
     volumes:
