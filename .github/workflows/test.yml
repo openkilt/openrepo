@@ -44,7 +44,7 @@ jobs:
       - name: Install CLI Dependencies
         run: |
           cd cli
-          pip install -r requirements.txt responses
+          pip install -r requirements.txt
           
       - name: Run CLI Tests
         run: |
