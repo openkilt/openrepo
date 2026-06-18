@@ -1,5 +1,5 @@
 import rpmfile
-from datetime import datetime
+from datetime import datetime, timezone
 from .base_adapter import RepoFileAdapter
 from dateutil import parser
 from django.conf import settings
@@ -32,7 +32,7 @@ class RpmFileAdapter(RepoFileAdapter):
                 if isinstance(value, bytes):
                     value = value.decode('utf-8', errors='replace')
                 if header == "buildtime":
-                    value = datetime.fromtimestamp(value).strftime("%c")
+                    value = datetime.fromtimestamp(value, tz=timezone.utc).strftime("%c")
                 if header == "description":
                     value = "\n" + value
 

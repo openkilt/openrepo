@@ -5,7 +5,7 @@ from django.conf import settings
 import os
 from unittest.mock import patch, MagicMock
 import datetime
-import pytz
+
 
 class SignalTestCase(TestCase):
     def setUp(self):
@@ -42,7 +42,7 @@ class SignalTestCase(TestCase):
             package_name="pkg1",
             version="1.0",
             architecture="all",
-            upload_date=datetime.datetime.now(tz=pytz.utc),
+            upload_date=datetime.datetime.now(tz=datetime.timezone.utc),
             checksum_sha512="abc"
         )
         
@@ -65,7 +65,7 @@ class SignalTestCase(TestCase):
             package_name="pkg",
             version="1.0",
             architecture="all",
-            upload_date=datetime.datetime.now(tz=pytz.utc),
+            upload_date=datetime.datetime.now(tz=datetime.timezone.utc),
             checksum_sha512="shared-hash"
         )
         
@@ -76,7 +76,7 @@ class SignalTestCase(TestCase):
             package_name="pkg",
             version="1.0",
             architecture="all",
-            upload_date=datetime.datetime.now(tz=pytz.utc),
+            upload_date=datetime.datetime.now(tz=datetime.timezone.utc),
             checksum_sha512="shared-hash"
         )
         
@@ -104,7 +104,7 @@ class SignalTestCase(TestCase):
             package_name="pkg",
             version="1.0",
             architecture="all",
-            upload_date=datetime.datetime.now(tz=pytz.utc),
+            upload_date=datetime.datetime.now(tz=datetime.timezone.utc),
             checksum_sha512="abc"
         )
         

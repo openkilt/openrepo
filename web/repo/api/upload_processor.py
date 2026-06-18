@@ -1,7 +1,6 @@
 import logging
 import os
-import pytz
-from datetime import datetime
+from datetime import datetime, timezone
 from django.db import close_old_connections
 from django.conf import settings
 from repo.models import UploadTask, Package
@@ -62,7 +61,7 @@ def process_upload(task_id):
             sha512 = compute_sha512(full_stored_filepath)
 
         package.repo = repo
-        package.upload_date = datetime.now(tz=pytz.utc)
+        package.upload_date = datetime.now(tz=timezone.utc)
         package.filename = filename
         package.build_date = file_info_adapter.get_builddate()
         package.architecture = file_info_adapter.get_architecture()
@@ -77,7 +76,7 @@ def process_upload(task_id):
         serializer = PackageDetailSerializer(package)
         task.result_data = serializer.data
         task.status = 'completed'
-        task.completed_at = datetime.now(tz=pytz.utc)
+        task.completed_at = datetime.now(tz=timezone.utc)
         task.save(update_fields=['result_data', 'status', 'completed_at'])
 
     except Exception as e:
@@ -89,5 +88,5 @@ def process_upload(task_id):
                 pass
         task.status = 'failed'
         task.error_message = str(e)
-        task.completed_at = datetime.now(tz=pytz.utc)
+        task.completed_at = datetime.now(tz=timezone.utc)
         task.save(update_fields=['status', 'error_message', 'completed_at'])

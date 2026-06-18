@@ -12,7 +12,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import pytz
 from django.db.models.signals import post_delete
 from .models import Package
 from django.dispatch import receiver
@@ -55,7 +54,7 @@ def flag_repo_as_stale(sender, instance, using, **kwargs):
     repo.package_count = pkg_count
 
     # Update the modification date
-    repo.last_updated = datetime.datetime.now(tz=pytz.utc)
+    repo.last_updated = datetime.datetime.now(tz=datetime.timezone.utc)
     repo.save()
 
 @receiver(signals.post_save, sender=User)
