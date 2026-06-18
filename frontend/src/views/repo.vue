@@ -219,7 +219,6 @@ import DialogUploadPackages from "@/components/dialog_upload_packages.vue"
 import SystemMessage from '@/components/system_message.vue'
 import {logger} from '@/logger.ts'
 import {waitFor} from '@/utils.ts'
-import moment from 'moment'
 import semver from 'semver'
 import { mapState } from 'vuex'
 
@@ -290,7 +289,9 @@ export default {
             });
         },
         format_date(value:Date) {
-            return moment(value).format('YYYY-MM-DD HH:mm:ss');
+            const d = new Date(value);
+            const pad = (n: number) => n.toString().padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
         },
         flagPromotables(pkgs_here: Array<any>, pkgs_promote: Array<any>)
         {

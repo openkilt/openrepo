@@ -43,7 +43,7 @@
 
                     <v-layout row wrap>
                         <v-col  class="text-left mt-0 pt-0 mb-5 " cols="12">
-                            <span class="text-caption">Started {{this.moment(build_details.timestamp).fromNow() }}</span>
+                            <span class="text-caption">Started {{this.timeAgo.format(new Date(build_details.timestamp)) }}</span>
                         </v-col>
                     </v-layout>
                     <v-divider></v-divider>
@@ -96,7 +96,6 @@
 import BuildLogDataService from "../services/buildlog_service";
 import {logger} from '@/logger.ts'
 import SystemMessage from '@/components/system_message.vue'
-import moment from 'moment'
 
 export default {
     name: "Repo Settings View",
@@ -110,7 +109,6 @@ export default {
             build_list: [],
             selected_build: '',
             build_details: '',
-            moment: moment,
             lines_already_retrieved: 0,
             build_summary: {
                 'summary_loaded': false,
