@@ -61,7 +61,7 @@
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
-                            <v-btn color="green darken-1" @click="copyInstructionsToClipboard(this.instructions_api);" text>Copy to Clipboard</v-btn>
+                            <v-btn color="green darken-1" @click="copyInstructionsToClipboard(this.user_info.instructions_api);" text>Copy to Clipboard</v-btn>
                             <v-btn color="green darken-1" @click="dialog_instructions_api = false;" text>Close</v-btn>
                         </v-card-actions>
                     </v-card>

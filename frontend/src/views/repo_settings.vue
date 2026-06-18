@@ -15,7 +15,6 @@
 -->
 
 <template>
-    <v-app>
     <SystemMessage 
       :message="this.show_global_error_msg" />
 
@@ -152,7 +151,6 @@
         </v-layout>
 
     </v-container>
-    </v-app>
 </template>
 
 <script lang="ts">
@@ -214,6 +212,7 @@ export default {
                 this.repo_data_retrieved();
             })
             .catch(e => {   
+                this.show_global_error_msg = 'Error loading repo: ' + e.message;
                 logger.debug(e);
             });
         },
@@ -241,6 +240,7 @@ export default {
                 logger.debug(response.data);
             })
             .catch(e => {
+                this.show_global_error_msg = 'Error loading repo list: ' + e.message;
                 logger.debug(e);
             });
         },
@@ -262,6 +262,7 @@ export default {
                 logger.debug(response.data);
             })
             .catch(e => {
+                this.show_global_error_msg = 'Error loading signing keys: ' + e.message;
                 logger.debug(e);
             });
         },

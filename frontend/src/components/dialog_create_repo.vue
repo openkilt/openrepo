@@ -139,6 +139,7 @@
                 logger.debug(response.data);
             })
             .catch(e => {
+                console.error('Failed to load PGP keys:', e);
                 logger.debug(e);
             });
         },

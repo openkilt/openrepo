@@ -1,5 +1,4 @@
 <template>
-    <v-app>
     <SystemMessage
       :message="this.show_global_error_msg" />
 
@@ -90,7 +89,6 @@
         </v-layout>
 
     </v-container>
-    </v-app>
 </template>
 
 <script lang="ts">
@@ -228,7 +226,7 @@ export default {
         },
     },
     watch: {
-        selected_build(old_selection, new_selection)
+        selected_build(new_selection, old_selection)
         {
             this.lines_already_retrieved = 0;
             this.log_lines = [];

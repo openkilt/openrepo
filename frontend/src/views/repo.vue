@@ -218,6 +218,7 @@ import DialogDeletePackages from "@/components/dialog_delete_packages.vue"
 import DialogUploadPackages from "@/components/dialog_upload_packages.vue"
 import SystemMessage from '@/components/system_message.vue'
 import {logger} from '@/logger.ts'
+import {waitFor} from '@/utils.ts'
 import moment from 'moment'
 import semver from 'semver'
 import { mapState } from 'vuex'
@@ -290,13 +291,6 @@ export default {
         },
         format_date(value:Date) {
             return moment(value).format('YYYY-MM-DD HH:mm:ss');
-        },
-        waitFor(conditionFunction) {
-            const poll = resolve => {
-                if(conditionFunction()) resolve();
-                else setTimeout(_ => poll(resolve), 10);
-            }
-            return new Promise(poll);
         },
         flagPromotables(pkgs_here: Array<any>, pkgs_promote: Array<any>)
         {
@@ -418,7 +412,7 @@ export default {
                     logger.debug(e);
                 });
 
-                this.waitFor(_ => completion_count >= 2)
+                waitFor(() => completion_count >= 2, 10)
                 .then(_ => {
                     logger.debug('All package list requests complete')
                     this.flagPromotables(repo_pkgs, promote_pkgs);
@@ -437,7 +431,7 @@ export default {
         },
     },
     watch: {
-        repo_details(old_details, new_details)
+        repo_details(new_details, old_details)
         {
             this.retrievePackages();
         },

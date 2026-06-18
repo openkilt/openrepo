@@ -135,7 +135,7 @@
                 </v-row>
             </v-container>
 
-            <v-alert v-if="dialog_error_messages && !isUploading" density="compact" type="error" class="mt-2" closible>
+            <v-alert v-if="dialog_error_messages && !isUploading" density="compact" type="error" class="mt-2" closable>
                 {{ dialog_error_messages }}
             </v-alert>
             </v-card-text>

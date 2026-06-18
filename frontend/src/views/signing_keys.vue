@@ -1,5 +1,4 @@
 <template>
-    <v-app>
     <v-container class="my-5">
 
         <v-layout row wrap>
@@ -136,7 +135,6 @@
             </v-col>
         </v-layout>
     </v-container>
-    </v-app>
 </template>
 
 <script lang="ts">
@@ -200,6 +198,7 @@ export default {
             })
             .catch(e => {
                 this.loading = false;
+                console.error('Failed to load PGP keys:', e);
                 logger.debug(e);
             });
         },
