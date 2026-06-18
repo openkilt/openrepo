@@ -23,12 +23,13 @@ The preferred method for running OpenRepo is with Docker using the provided dock
 as well as instantiate a PostgreSQL database.  All persistent files (i.e., the database, cache data, PGP keys, and the package files) are stored in a relative folder named 
 openrepo-data.
 
-First ensure that you have installed Docker and the [Docker Compose plugin](https://docker-docs.netlify.app/compose/install/)
+**Prerequisites:** [Docker](https://docs.docker.com/engine/install/) and the [Docker Compose plugin](https://docker-docs.netlify.app/compose/install/).
 
 
 To start the server:
 
     wget https://raw.githubusercontent.com/openkilt/openrepo/master/docker-compose.yml
+    docker compose pull
     docker compose up -d
 
 You can now navigate to the server on http://localhost:7376
@@ -38,7 +39,15 @@ The default credentials are:
     username: admin
     password: admin
 
-If desired, it is possible to point to an alternative PostgreSQL server by updating the "OPENREPO_PG" environment variables in the docker-compose file.
+> **Security:** Change the default admin password immediately after first login.
+
+If desired, you can set a custom Django secret key and PostgreSQL password via environment variables:
+
+    export DJANGO_SECRET_KEY="your-secure-random-key"
+    export OPENREPO_PG_PASSWORD="your-db-password"
+    docker compose up -d
+
+It is also possible to point to an alternative PostgreSQL server by updating the `OPENREPO_PG_*` environment variables in the docker-compose file.
 
 
 ## CI Integration
@@ -54,7 +63,7 @@ There are two levels of users:
   1. **Super User** - Has read/write access to all repositories as well as administrative access to add/remove users, keys, and permissions
   2. **Regular User** - Has read access to all repositories.  Write access must be granted explicitly for each repository
 
-Two add a new user:
+To add a new user:
   1. As the super user, click on "System Admin" from the menu in the top-right
   2. Click on the "Add" button next to the Users link
   3. Add a username and password and click "Save"
@@ -78,8 +87,8 @@ Repo UID is created when a new repo is created.
 
     # Create a new repo
     POST /api/repos/
-    Example: curl -X POST http://<your-openrepo-instance>:7376/api/repos/ -H 'Authorization: Token <your-user-token>' -F "repo_uid=<repo-name>" -F "repo_type=<deb|rpm|files>" -F "signing_key=<FINGERPRINT_OF_SIGNINGKEY"
-    You need to create a SigningKey otherwise you can not create
+    Example: curl -X POST http://<your-openrepo-instance>:7376/api/repos/ -H 'Authorization: Token <your-user-token>' -H 'Content-Type: application/json' -d '{"repo_uid": "<repo-name>", "repo_type": "deb|rpm|files", "signing_key": "<FINGERPRINT_OF_SIGNINGKEY>"}'
+    A signing key must be created before creating a repo.
 
     # Delete a repo
     DELETE /api/<repo>/
@@ -170,7 +179,7 @@ Next, open four separate tabs and run the following commands:
     Tab 1: cd web; ./manage.py runserver
     Tab 2: cd web; ./manage.py runworker
     Tab 3: cd frontend; npm run dev
-    Tab 4: nginx -c /storage/projects/openrepo/deploy/nginx/nginx.conf.dev
+    Tab 4: nginx -c <path-to-repo>/deploy/nginx/nginx.conf.dev
 
 
 Next, navigate to http://localhost:5173/ to see your code updates.  Both the Vue.js dev server and the Django dev server support live updates on code changes.  
