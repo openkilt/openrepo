@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('repo', '0005_alter_package_unique_together'),
-        ('repo', '0002_unique_promote_to'),
+        ('repo', '0002a_unique_promote_to'),
     ]
 
     operations = [
