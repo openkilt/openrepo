@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   nginx:
     image: ghcr.io/openkilt/openrepo:feature-auto-build-docker

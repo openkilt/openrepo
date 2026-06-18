@@ -52,6 +52,9 @@ COPY deploy/nginx/nginx.conf.prod /etc/nginx/nginx.conf
 # Copy entrypoint script
 COPY deploy/run_openrepoweb /usr/bin/
 
+# Document container ports (nginx serves on 8080)
+EXPOSE 8080
+
 # Collect Django static files
 RUN mkdir -p /var/lib/openrepo/packages/ && \
     /venv/bin/python /app/django/manage.py collectstatic --noinput
