@@ -1,1 +1,31 @@
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+venv3/
+__pycache__/
+*.pyc
+*.pyo
+*.sqlite3
+.coverage
+htmlcov/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Build artifacts
+dist/
+build/
+
+# Logs
+*.log
+logs/
+
+# Project-specific
 openrepo-data/
