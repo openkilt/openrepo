@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: ghcr.io/openkilt/openrepo:feature-auto-build-docker
+    image: ghcr.io/openkilt/openrepo:latest
     command: nginx
     restart: unless-stopped
     ports:
@@ -20,7 +20,7 @@ services:
 
 
   django:
-    image: test #ghcr.io/openkilt/openrepo:feature-auto-build-docker
+    image: test #ghcr.io/openkilt/openrepo:latest
     expose:
       - "8000"
     command: run_openrepoweb
@@ -47,7 +47,7 @@ services:
 
 
   worker:
-    image: ghcr.io/openkilt/openrepo:feature-auto-build-docker
+    image: ghcr.io/openkilt/openrepo:latest
     command: ./django/manage.py runworker
     volumes:
       - ./openrepo-data:/var/lib/openrepo
