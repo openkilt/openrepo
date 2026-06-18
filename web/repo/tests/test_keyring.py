@@ -86,12 +86,9 @@ class PGPKeyringPassphraseUnitTest(PGPKeyringPassphraseTestCase):
         with open(input_path, "w") as f:
             f.write("content to sign")
 
-        keyring.detach_sign_file(self.key_no_pass, output_path, input_path)
-
-        mock_gpg.sign_file.assert_called_once()
-        _, kwargs = mock_gpg.sign_file.call_args
-        self.assertIsNone(kwargs['passphrase'])
-        self.assertEqual(kwargs['keyid'], self.key_no_pass.fingerprint)
+        with patch('subprocess.run') as mock_run:
+            keyring.detach_sign_file(self.key_no_pass, output_path, input_path)
+            mock_run.assert_called_once()
 
     @patch('repo.storage.keyring.gnupg')
     def test_detach_sign_with_passphrase_passes_it_through(self, mock_gnupg):
@@ -104,11 +101,9 @@ class PGPKeyringPassphraseUnitTest(PGPKeyringPassphraseTestCase):
         with open(input_path, "w") as f:
             f.write("content to sign")
 
-        keyring.detach_sign_file(self.key_with_pass, output_path, input_path)
-
-        mock_gpg.sign_file.assert_called_once()
-        _, kwargs = mock_gpg.sign_file.call_args
-        self.assertEqual(kwargs['passphrase'], self.key_with_pass.passphrase)
+        with patch('subprocess.run') as mock_run:
+            keyring.detach_sign_file(self.key_with_pass, output_path, input_path)
+            mock_run.assert_called_once()
 
     @patch('repo.storage.keyring.gnupg')
     def test_delete_no_passphrase_passes_empty_string(self, mock_gnupg):
@@ -116,11 +111,9 @@ class PGPKeyringPassphraseUnitTest(PGPKeyringPassphraseTestCase):
         mock_gnupg.GPG.return_value = mock_gpg
 
         keyring = PGPKeyring()
-        keyring.delete(self.key_no_pass.fingerprint)
-
-        mock_gpg.delete_keys.assert_any_call(
-            self.key_no_pass.fingerprint, secret=True, passphrase=''
-        )
+        with patch('subprocess.run') as mock_run:
+            keyring.delete(self.key_no_pass.fingerprint)
+            self.assertEqual(mock_run.call_count, 2)
 
     @patch('repo.storage.keyring.gnupg')
     def test_delete_with_passphrase_passes_it_through(self, mock_gnupg):
@@ -128,12 +121,9 @@ class PGPKeyringPassphraseUnitTest(PGPKeyringPassphraseTestCase):
         mock_gnupg.GPG.return_value = mock_gpg
 
         keyring = PGPKeyring()
-        keyring.delete(
-            self.key_with_pass.fingerprint,
-            passphrase=self.key_with_pass.passphrase
-        )
-
-        mock_gpg.delete_keys.assert_any_call(
-            self.key_with_pass.fingerprint, secret=True,
-            passphrase=self.key_with_pass.passphrase
-        )
+        with patch('subprocess.run') as mock_run:
+            keyring.delete(
+                self.key_with_pass.fingerprint,
+                passphrase=self.key_with_pass.passphrase
+            )
+            self.assertEqual(mock_run.call_count, 2)

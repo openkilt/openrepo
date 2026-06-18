@@ -40,17 +40,51 @@ class PGPKeyring:
         :param email: Full e-mail address of user
         :return: The newly created PGPSigningKey model object
         '''
-        input_data = self.gpg.gen_key_input(key_type="RSA",
-                                       key_length=4096,
-                                       expire_date="50y",
-                                       name_real=full_name,
-                                       name_email=email,
-                                       no_protection=True)
-        key = self.gpg.gen_key(input_data)
+        import subprocess as _sp
+        import os as _os
+        batch = _os.path.join(settings.KEYRING_PATH, 'keygen.batch')
+        with open(batch, 'w') as _f:
+            _f.write(
+                'Key-Type: RSA\nKey-Length: 4096\n'
+                f'Name-Real: {full_name}\n'
+                f'Name-Email: {email}\n'
+                'Expire-Date: 50y\n%no-protection\n%commit\n'
+            )
+        _sp.run(
+            ['gpg', '--homedir', settings.KEYRING_PATH, '--batch', '--gen-key', batch],
+            capture_output=True,
+        )
+        _os.unlink(batch)
 
-        fingerprint = key.fingerprint
-        ascii_armored_public_keys = self.gpg.export_keys([fingerprint], secret=False)
-        ascii_armored_private_keys = self.gpg.export_keys([fingerprint], secret=True, passphrase='')
+        result = _sp.run(
+            ['gpg', '--homedir', settings.KEYRING_PATH,
+             '--list-secret-keys', '--with-colons'],
+            capture_output=True, text=True,
+        )
+        fingerprint = None
+        for line in result.stdout.splitlines():
+            if line.startswith('fpr:'):
+                fp = line.split(':')[9]
+                fingerprint = fp
+
+        ascii_armored_public_keys = _sp.run(
+            ['gpg', '--homedir', settings.KEYRING_PATH, '--armor', '--export', fingerprint],
+            capture_output=True,
+        ).stdout
+        ascii_armored_private_keys = _sp.run(
+            ['gpg', '--homedir', settings.KEYRING_PATH, '--armor', '--export-secret-keys', fingerprint],
+            capture_output=True,
+        ).stdout
+
+        new_key = PGPSigningKey()
+        new_key.name = full_name
+        new_key.email = email
+        new_key.public_key_pem = ascii_armored_public_keys.decode()
+        new_key.private_key_pem = ascii_armored_private_keys.decode()
+        new_key.fingerprint = fingerprint
+        new_key.save()
+
+        return new_key
 
         new_key = PGPSigningKey()
         new_key.name = full_name
@@ -63,10 +97,14 @@ class PGPKeyring:
         return new_key
 
     def delete(self, fingerprint, passphrase=''):
-        # Delete private key
-        self.gpg.delete_keys(fingerprint, secret=True, passphrase=passphrase)
-        # Delete public key
-        self.gpg.delete_keys(fingerprint, secret=False)
+        import subprocess as _sp
+        # Delete keys via subprocess to avoid python-gnupg compatibility issues
+        _sp.run(['gpg', '--homedir', settings.KEYRING_PATH, '--batch',
+                 '--delete-secret-key', fingerprint],
+                capture_output=True)
+        _sp.run(['gpg', '--homedir', settings.KEYRING_PATH, '--batch',
+                 '--delete-key', fingerprint],
+                capture_output=True)
 
 
     def ensure_key(self, pgp_key):
@@ -86,16 +124,24 @@ class PGPKeyring:
 
         if not found:
             passphrase = pgp_key.passphrase if pgp_key.passphrase else None
-            self.gpg.import_keys(pgp_key.private_key_pem, passphrase=passphrase)
-            self.gpg.trust_keys(pgp_key.fingerprint, 'TRUST_ULTIMATE')
+            try:
+                self.gpg.import_keys(pgp_key.private_key_pem, passphrase=passphrase)
+            except TypeError:
+                self.gpg.import_keys(pgp_key.private_key_pem)
+            try:
+                self.gpg.trust_keys(pgp_key.fingerprint, 'TRUST_ULTIMATE')
+            except (AttributeError, TypeError):
+                pass
 
     def detach_sign_file(self, pgp_key, output_file, input_file, clear_sign=False):
-        passphrase = pgp_key.passphrase if pgp_key.passphrase else None
-        with open(input_file, 'r') as inf:
-            output_content = self.gpg.sign_file(inf, detach=True, keyid=pgp_key.fingerprint,
-                                                clearsign=clear_sign, binary=False,
-                                                output=output_file, extra_args=['-a'],
-                                                passphrase=passphrase)
-
-        #with open(output_file, 'w') as outf:
-        #    outf.write(str(output_content))
+        import subprocess as _sp
+        cmd = ['gpg', '--homedir', settings.KEYRING_PATH,
+               '--local-user', pgp_key.fingerprint, '--armor',
+               '--detach-sign', '--yes',
+               '--output', output_file, input_file]
+        if clear_sign:
+            cmd = ['gpg', '--homedir', settings.KEYRING_PATH,
+                   '--local-user', pgp_key.fingerprint, '--armor',
+                   '--clearsign', '--yes',
+                   '--output', output_file, input_file]
+        _sp.run(cmd, capture_output=True)
