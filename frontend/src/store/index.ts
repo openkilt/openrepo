@@ -15,19 +15,24 @@
  */
 
 
-import { createStore } from 'vuex'
+import { createStore, type Store } from 'vuex'
 
+export interface UserState {
+    username: string;
+    is_superuser: boolean;
+}
 
-// Create a new store instance for app-wide data
-export default createStore({
-    state () {
+export type UserStore = Store<UserState>;
+
+export default createStore<UserState>({
+    state (): UserState {
       return {
         username: '',
         is_superuser: false,
       }
     },
     mutations: {
-      set_user (state, userdata) {
+      set_user (state: UserState, userdata: { username: string; is_superuser: boolean }) {
         state.username = userdata.username;
         state.is_superuser = userdata.is_superuser;
       }

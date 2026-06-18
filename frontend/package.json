@@ -16,7 +16,6 @@
     "semver": "^7.6.3",
     "vue": "^3.5.38",
     "vue-router": "^4.4.0",
-    "vuejs3-logger": "^1.0.0",
     "vuetify": "^3.6.13",
     "vuex": "^4.1.0",
     "webfontloader": "^1.6.28"
@@ -24,10 +23,10 @@
   "devDependencies": {
     "@mdi/font": "^7.4.47",
     "@types/node": "^20.14.12",
+    "@types/semver": "^7.5.8",
     "@types/webfontloader": "^1.6.38",
     "@vitejs/plugin-vue": "^5.1.0",
     "@vue/tsconfig": "^0.5.1",
-    "npm-run-all": "^4.1.5",
     "typescript": "~5.5.4",
     "vite": "^5.3.5",
     "vite-plugin-vuetify": "^2.0.3",
