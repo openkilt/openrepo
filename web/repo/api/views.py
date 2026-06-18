@@ -228,8 +228,15 @@ class CopyViewSet(viewsets.ViewSet):
     serializer_class = CopySerializer
 
     def create(self, request, repo_uid, package_uid):
-        src_repo = Repository.objects.get(repo_uid=repo_uid)
-        package = Package.objects.get(repo=src_repo, package_uid=package_uid)
+        try:
+            src_repo = Repository.objects.get(repo_uid=repo_uid)
+        except Repository.DoesNotExist:
+            raise rest_framework.exceptions.NotFound(f"Source repo_uid {repo_uid} not found")
+
+        try:
+            package = Package.objects.get(repo=src_repo, package_uid=package_uid)
+        except Package.DoesNotExist:
+            raise rest_framework.exceptions.NotFound(f"Package {package_uid} not found in repo {repo_uid}")
 
         dst_repo_uid = request.POST.get('dest_repo_uid')
         logger.debug(request.POST)
@@ -280,7 +287,10 @@ class UploadViewSet(viewsets.ViewSet):
     serializer_class = UploadSerializer
 
     def create(self, request, repo_uid):
-        repo = Repository.objects.get(repo_uid=repo_uid)
+        try:
+            repo = Repository.objects.get(repo_uid=repo_uid)
+        except Repository.DoesNotExist:
+            raise rest_framework.exceptions.NotFound(f"Repo {repo_uid} not found")
 
         self.check_object_permissions(request, repo)
 
