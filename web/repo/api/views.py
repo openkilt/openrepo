@@ -54,7 +54,7 @@ class ReposViewSet(viewsets.ModelViewSet):
     API endpoint that allows groups to be viewed or edited.
     """
     lookup_field = 'repo_uid'
-    queryset = Repository.objects.all().order_by('repo_uid')
+    queryset = Repository.objects.all().order_by('repo_uid').select_related('promote_to').prefetch_related('write_access')
     serializer_class = RepoSummarySerializer
 
     def get_serializer_class(self):
@@ -167,7 +167,7 @@ class PackagesViewSet(viewsets.ModelViewSet):
         the user as determined by the username portion of the URL.
         """
         repo_uid = self.kwargs['repo_uid']
-        return Package.objects.filter(repo__repo_uid=repo_uid)
+        return Package.objects.filter(repo__repo_uid=repo_uid).select_related('repo')
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
@@ -202,7 +202,7 @@ class BuildViewSet(rest_framework.mixins.ListModelMixin,
     """
     API endpoint that allows groups to be viewed or edited.
     """
-    queryset = Build.objects.all().order_by('build_number')
+    queryset = Build.objects.all().order_by('build_number').select_related('repo')
     serializer_class = BuildSerializer
 
     filter_backends = [DjangoFilterBackend]
@@ -216,7 +216,7 @@ class BuildLogViewSet(rest_framework.mixins.ListModelMixin,
     API endpoint that allows groups to be viewed or edited.
     """
     # lookup_fields = ('repo__repo_uid', 'package_uid')
-    queryset = BuildLogLine.objects.all()
+    queryset = BuildLogLine.objects.all().select_related('build')
     serializer_class = BuildLogSerializer
 
     filter_backends = [DjangoFilterBackend]
