@@ -59,7 +59,7 @@ class Repository(models.Model):
     repo_type = models.CharField(max_length=128, choices=REPO_TYPES, db_index=True)
 
     signing_key = models.ForeignKey(PGPSigningKey, blank=True, null=True, on_delete=models.PROTECT)
-    promote_to = models.ForeignKey("self", blank=True, null=True, unique=True, on_delete=models.CASCADE)
+    promote_to = models.OneToOneField("self", blank=True, null=True, on_delete=models.CASCADE)
 
     # When a newer package of the same name is uploaded, delete the older versions
     keep_only_latest = models.BooleanField(default=False)

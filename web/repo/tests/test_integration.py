@@ -12,6 +12,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from repo.models import Repository, Package, PGPSigningKey, Build
 from rest_framework.authtoken.models import Token
+import unittest
 from unittest.mock import patch
 
 
@@ -268,6 +269,7 @@ class DebRepoIntegrationTest(APITestCase):
         new_key.delete()
 
 
+@unittest.skipUnless(shutil.which('createrepo'), 'createrepo not found on system')
 class RpmRepoIntegrationTest(APITestCase):
     """End-to-end test using real createrepo_c with a generated RPM package"""
 
