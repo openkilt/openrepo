@@ -36,6 +36,7 @@ services:
       - ./openrepo-data:/var/lib/openrepo
     environment:
       # - "OPENREPO_CSRF_TRUSTED_ORIGINS=myproxiedname.example.com"   #Multiple domains are space delimited"
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-}
       - OPENREPO_DB_TYPE=postgresql
       - OPENREPO_PG_DATABASE=openrepo
       - OPENREPO_PG_USERNAME=postgres
@@ -59,6 +60,7 @@ services:
       retries: 3
       start_period: 15s
     environment:
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-}
       - OPENREPO_DB_TYPE=postgresql
       - OPENREPO_PG_DATABASE=openrepo
       - OPENREPO_PG_USERNAME=postgres
