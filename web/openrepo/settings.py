@@ -136,6 +136,7 @@ elif db_type == 'postgresql':
             'PASSWORD': os.getenv("OPENREPO_PG_PASSWORD", "postgres"),
             'HOST': os.getenv("OPENREPO_PG_HOSTNAME", "localhost"),
             'PORT': os.getenv("OPENREPO_PG_PORT", "5432"),
+            'CONN_MAX_AGE': int(os.getenv('OPENREPO_PG_CONN_MAX_AGE', '300')),
         }
     }
 else:
