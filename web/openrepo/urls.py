@@ -27,19 +27,16 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
-from django.urls import path, include
 from django.contrib.auth import views as auth_views
-from repo import views as repo_views
+from django.urls import include, path
 
 urlpatterns = [
-    path('admin/login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
-    path('admin/logout/', repo_views.logout_view, name='logout'),
-    path('admin/', admin.site.urls),
-    path('api-auth/', include('rest_framework.urls')),
-    path('api/', include('repo.api.urls')),
-
-    path('back/change-password/', auth_views.PasswordChangeView.as_view(success_url = '/'), name='change_password' ),
-
+    path("admin/login/", auth_views.LoginView.as_view(template_name="login.html"), name="login"),
+    path("admin/", admin.site.urls),
+    path("api-auth/", include("rest_framework.urls")),
+    path("api/", include("repo.api.urls")),
+    path("back/change-password/", auth_views.PasswordChangeView.as_view(success_url="/"), name="change_password"),
 ]
-admin.site.site_header = 'System Admin'
+admin.site.site_header = "System Admin"

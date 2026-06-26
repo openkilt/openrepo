@@ -29,5 +29,4 @@ class RepoFileAdapter:
         raise NotImplementedError("Subclasses must implement get_description()")
 
     def get_builddate(self):
-        raise NotImplementedError("Subclasses must implement get_builddate()")
-
+        logger.warning("This function should never be called directly, only subclasses")

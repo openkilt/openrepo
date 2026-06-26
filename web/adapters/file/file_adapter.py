@@ -13,14 +13,15 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-from .base_adapter import RepoFileAdapter
 import re
+
+from .base_adapter import RepoFileAdapter
+
 
 class GenericFileAdapter(RepoFileAdapter):
     def __init__(self, filepath, original_filename):
         self.filepath = filepath
         self.original_filename = original_filename
-
 
     def get_name(self):
         return self.original_filename
@@ -30,7 +31,7 @@ class GenericFileAdapter(RepoFileAdapter):
 
     def get_version(self):
         # Try finding the first "x.y.z" value from the filename to guess the version number
-        matches = re.findall(r'\d+(?:\.\d+)+(?:[-.+][\w.]+)?', self.original_filename)
+        matches = re.findall(r"\d+\.\d+\.\d+", self.original_filename)
         if len(matches) > 0:
             return matches[0]
         return ""

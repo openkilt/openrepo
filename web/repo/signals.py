@@ -12,16 +12,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from django.db.models.signals import post_delete
-from .models import Package
-from django.dispatch import receiver
 import datetime
-from .storage.filemanager import RepoFileManager
-from django.db.models import signals
 import logging
+
+import pytz
+from django.contrib.auth.models import User
+from django.db.models import signals
+from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 
-from django.contrib.auth.models import User
+from .models import Package
+from .storage.filemanager import RepoFileManager
 
 logger = logging.getLogger("openrepo_web")
 
@@ -57,9 +58,10 @@ def flag_repo_as_stale(sender, instance, using, **kwargs):
     repo.last_updated = datetime.datetime.now(tz=datetime.timezone.utc)
     repo.save()
 
+
 @receiver(signals.post_save, sender=User)
 def create_auth_token(sender, instance, **kwargs):
-    created = kwargs.get('created', False)
+    created = kwargs.get("created", False)
     # When a new user is created, automatically generate a REST API token for authentication
     if created:
         user = instance

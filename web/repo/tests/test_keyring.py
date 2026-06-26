@@ -1,129 +1,216 @@
-from django.test import TestCase
+# Copyright 2022 by Open Kilt LLC. All rights reserved.
+import os
+import tempfile
+from unittest.mock import MagicMock, call, patch
+
 from django.conf import settings
+from django.test import TestCase
+
 from repo.models import PGPSigningKey
 from repo.storage.keyring import PGPKeyring
-from unittest.mock import patch, MagicMock
-import tempfile, os, shutil
 
 
-class PGPKeyringPassphraseTestCase(TestCase):
-
+class PGPKeyringInitTestCase(TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
         settings.KEYRING_PATH = os.path.join(self.test_dir, "keyring")
 
-        self.key_no_pass = PGPSigningKey.objects.create(
-            name="No Passphrase Key",
-            email="nopass@example.com",
-            fingerprint="AAAA1111BBBB2222CCCC3333DDDD4444EEEE5555",
-            public_key_pem="dummy public no pass",
-            private_key_pem="dummy private no pass",
-            passphrase=""
-        )
-        self.key_with_pass = PGPSigningKey.objects.create(
-            name="With Passphrase Key",
-            email="withpass@example.com",
-            fingerprint="FFFF6666GGGG7777HHHH8888IIII9999JJJJ0000",
-            public_key_pem="dummy public with pass",
-            private_key_pem="dummy private with pass",
-            passphrase="my secret passphrase"
-        )
+    def test_creates_keyring_dir_if_missing(self):
+        """PGPKeyring creates keyring directory when it does not exist"""
+        with patch("gnupg.GPG") as mock_gpg_cls:
+            mock_gpg_cls.return_value = MagicMock()
+            ring = PGPKeyring()
+            self.assertTrue(os.path.isdir(settings.KEYRING_PATH))
 
-    def tearDown(self):
-        shutil.rmtree(self.test_dir, ignore_errors=True)
-
-
-class PGPKeyringPassphraseUnitTest(PGPKeyringPassphraseTestCase):
-
-    @patch('repo.storage.keyring.gnupg')
-    def test_ensure_key_no_passphrase_passes_none(self, mock_gnupg):
+    def test_init_with_gnupghome_kwarg(self):
+        """PGPKeyring tries gnupghome first, falls back to homedir"""
+        os.makedirs(settings.KEYRING_PATH, exist_ok=True)
         mock_gpg = MagicMock()
-        mock_gpg.list_keys.return_value = []
-        mock_gnupg.GPG.return_value = mock_gpg
+        with patch("gnupg.GPG", return_value=mock_gpg) as mock_gpg_cls:
+            ring = PGPKeyring()
+            mock_gpg_cls.assert_called_with(gnupghome=settings.KEYRING_PATH)
 
-        keyring = PGPKeyring()
-        keyring.ensure_key(self.key_no_pass)
+    def test_init_fallback_to_homedir(self):
+        """PGPKeyring falls back to homedir= kwarg when gnupghome raises TypeError"""
+        os.makedirs(settings.KEYRING_PATH, exist_ok=True)
+        mock_gpg = MagicMock()
+        with patch("gnupg.GPG", side_effect=[TypeError("no gnupghome"), mock_gpg]):
+            ring = PGPKeyring()
+            self.assertEqual(ring.gpg, mock_gpg)
 
-        mock_gpg.import_keys.assert_called_once_with(
-            self.key_no_pass.private_key_pem, passphrase=None
+
+class PGPKeyringGenerateKeyTestCase(TestCase):
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+        settings.KEYRING_PATH = os.path.join(self.test_dir, "keyring")
+        os.makedirs(settings.KEYRING_PATH)
+
+    @patch("gnupg.GPG")
+    def test_generate_key_creates_db_entry(self, mock_gpg_cls):
+        """generate_key saves a new PGPSigningKey to the database"""
+        mock_gpg = MagicMock()
+        mock_gpg_cls.return_value = mock_gpg
+
+        fake_key = MagicMock()
+        fake_key.fingerprint = "ABCDEF1234567890ABCDEF1234567890ABCDEF12"
+        mock_gpg.gen_key.return_value = fake_key
+        mock_gpg.export_keys.side_effect = ["-----PUBLIC KEY-----", "-----PRIVATE KEY-----"]
+
+        ring = PGPKeyring()
+        result = ring.generate_key("Test User", "test@example.com")
+
+        self.assertEqual(PGPSigningKey.objects.count(), 1)
+        saved = PGPSigningKey.objects.get()
+        self.assertEqual(saved.fingerprint, fake_key.fingerprint)
+        self.assertEqual(saved.name, "Test User")
+        self.assertEqual(saved.email, "test@example.com")
+        self.assertEqual(result, saved)
+
+    @patch("gnupg.GPG")
+    def test_generate_key_calls_gen_key_input(self, mock_gpg_cls):
+        """generate_key builds RSA-4096 key input with correct parameters"""
+        mock_gpg = MagicMock()
+        mock_gpg_cls.return_value = mock_gpg
+        fake_key = MagicMock()
+        fake_key.fingerprint = "FP123"
+        mock_gpg.gen_key.return_value = fake_key
+        mock_gpg.export_keys.side_effect = ["pub", "priv"]
+
+        ring = PGPKeyring()
+        ring.generate_key("Alice", "alice@example.com")
+
+        mock_gpg.gen_key_input.assert_called_once_with(
+            key_type="RSA",
+            key_length=4096,
+            expire_date="50y",
+            name_real="Alice",
+            name_email="alice@example.com",
+            no_protection=True,
         )
 
-    @patch('repo.storage.keyring.gnupg')
-    def test_ensure_key_with_passphrase_passes_it_through(self, mock_gnupg):
+
+class PGPKeyringDeleteTestCase(TestCase):
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+        settings.KEYRING_PATH = os.path.join(self.test_dir, "keyring")
+        os.makedirs(settings.KEYRING_PATH)
+
+    @patch("gnupg.GPG")
+    def test_delete_calls_gpg_delete_keys_twice(self, mock_gpg_cls):
+        """delete() removes private then public key from the keyring"""
         mock_gpg = MagicMock()
-        mock_gpg.list_keys.return_value = []
-        mock_gnupg.GPG.return_value = mock_gpg
+        mock_gpg_cls.return_value = mock_gpg
 
-        keyring = PGPKeyring()
-        keyring.ensure_key(self.key_with_pass)
+        ring = PGPKeyring()
+        ring.delete("FINGERPRINT123")
 
-        mock_gpg.import_keys.assert_called_once_with(
-            self.key_with_pass.private_key_pem,
-            passphrase=self.key_with_pass.passphrase
-        )
-
-    @patch('repo.storage.keyring.gnupg')
-    def test_ensure_key_skips_import_when_key_already_present(self, mock_gnupg):
-        mock_gpg = MagicMock()
-        mock_gpg.list_keys.return_value = [
-            {'fingerprint': self.key_no_pass.fingerprint}
+        expected = [
+            call("FINGERPRINT123", secret=True, passphrase=""),
+            call("FINGERPRINT123", secret=False),
         ]
-        mock_gnupg.GPG.return_value = mock_gpg
+        mock_gpg.delete_keys.assert_has_calls(expected)
 
-        keyring = PGPKeyring()
-        keyring.ensure_key(self.key_no_pass)
+
+class PGPKeyringEnsureKeyTestCase(TestCase):
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+        settings.KEYRING_PATH = os.path.join(self.test_dir, "keyring")
+        os.makedirs(settings.KEYRING_PATH)
+
+        self.pgp_key = PGPSigningKey(
+            fingerprint="ABCDEF12345",
+            private_key_pem="-----PRIVATE-----",
+            public_key_pem="-----PUBLIC-----",
+            name="Key",
+            email="key@example.com",
+        )
+
+    @patch("gnupg.GPG")
+    def test_ensure_key_imports_when_not_found(self, mock_gpg_cls):
+        """ensure_key imports and trusts the key when not already in keyring"""
+        mock_gpg = MagicMock()
+        mock_gpg_cls.return_value = mock_gpg
+        mock_gpg.list_keys.return_value = []
+
+        ring = PGPKeyring()
+        ring.ensure_key(self.pgp_key)
+
+        mock_gpg.import_keys.assert_called_once_with(self.pgp_key.private_key_pem)
+        mock_gpg.trust_keys.assert_called_once_with(self.pgp_key.fingerprint, "TRUST_ULTIMATE")
+
+    @patch("gnupg.GPG")
+    def test_ensure_key_skips_import_when_already_present(self, mock_gpg_cls):
+        """ensure_key does not import when key already exists in keyring"""
+        mock_gpg = MagicMock()
+        mock_gpg_cls.return_value = mock_gpg
+        mock_gpg.list_keys.return_value = [{"fingerprint": "ABCDEF12345"}]
+
+        ring = PGPKeyring()
+        ring.ensure_key(self.pgp_key)
 
         mock_gpg.import_keys.assert_not_called()
 
-    @patch('repo.storage.keyring.gnupg')
-    def test_detach_sign_no_passphrase_passes_none(self, mock_gnupg):
+    @patch("gnupg.GPG")
+    def test_ensure_key_with_multiple_keys_finds_correct(self, mock_gpg_cls):
+        """ensure_key correctly matches fingerprint among multiple keys"""
         mock_gpg = MagicMock()
-        mock_gnupg.GPG.return_value = mock_gpg
+        mock_gpg_cls.return_value = mock_gpg
+        mock_gpg.list_keys.return_value = [
+            {"fingerprint": "OTHER1"},
+            {"fingerprint": "ABCDEF12345"},
+        ]
 
-        keyring = PGPKeyring()
-        input_path = os.path.join(self.test_dir, "input.txt")
-        output_path = os.path.join(self.test_dir, "output.asc")
-        with open(input_path, "w") as f:
-            f.write("content to sign")
+        ring = PGPKeyring()
+        ring.ensure_key(self.pgp_key)
 
-        with patch('subprocess.run') as mock_run:
-            keyring.detach_sign_file(self.key_no_pass, output_path, input_path)
-            mock_run.assert_called_once()
+        mock_gpg.import_keys.assert_not_called()
 
-    @patch('repo.storage.keyring.gnupg')
-    def test_detach_sign_with_passphrase_passes_it_through(self, mock_gnupg):
+
+class PGPKeyringDetachSignTestCase(TestCase):
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+        settings.KEYRING_PATH = os.path.join(self.test_dir, "keyring")
+        os.makedirs(settings.KEYRING_PATH)
+
+    @patch("gnupg.GPG")
+    def test_detach_sign_file_calls_sign(self, mock_gpg_cls):
+        """detach_sign_file opens the input file and calls gpg.sign_file"""
         mock_gpg = MagicMock()
-        mock_gnupg.GPG.return_value = mock_gpg
+        mock_gpg_cls.return_value = mock_gpg
 
-        keyring = PGPKeyring()
-        input_path = os.path.join(self.test_dir, "input.txt")
-        output_path = os.path.join(self.test_dir, "output.asc")
-        with open(input_path, "w") as f:
-            f.write("content to sign")
+        # Create a real temp file to open
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, dir=self.test_dir) as f:
+            f.write("some content")
+            input_path = f.name
 
-        with patch('subprocess.run') as mock_run:
-            keyring.detach_sign_file(self.key_with_pass, output_path, input_path)
-            mock_run.assert_called_once()
+        pgp_key = MagicMock()
+        pgp_key.fingerprint = "MYFP123"
 
-    @patch('repo.storage.keyring.gnupg')
-    def test_delete_no_passphrase_passes_empty_string(self, mock_gnupg):
+        ring = PGPKeyring()
+        ring.detach_sign_file(pgp_key, "/tmp/out.sig", input_path)
+
+        mock_gpg.sign_file.assert_called_once()
+        _, kwargs = mock_gpg.sign_file.call_args
+        self.assertEqual(kwargs["keyid"], "MYFP123")
+        self.assertTrue(kwargs["detach"])
+        self.assertFalse(kwargs["clearsign"])
+        self.assertEqual(kwargs["output"], "/tmp/out.sig")
+
+    @patch("gnupg.GPG")
+    def test_detach_sign_file_clearsign_param(self, mock_gpg_cls):
+        """detach_sign_file passes clear_sign=True when requested"""
         mock_gpg = MagicMock()
-        mock_gnupg.GPG.return_value = mock_gpg
+        mock_gpg_cls.return_value = mock_gpg
 
-        keyring = PGPKeyring()
-        with patch('subprocess.run') as mock_run:
-            keyring.delete(self.key_no_pass.fingerprint)
-            self.assertEqual(mock_run.call_count, 2)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, dir=self.test_dir) as f:
+            f.write("content")
+            input_path = f.name
 
-    @patch('repo.storage.keyring.gnupg')
-    def test_delete_with_passphrase_passes_it_through(self, mock_gnupg):
-        mock_gpg = MagicMock()
-        mock_gnupg.GPG.return_value = mock_gpg
+        pgp_key = MagicMock()
+        pgp_key.fingerprint = "FP"
 
-        keyring = PGPKeyring()
-        with patch('subprocess.run') as mock_run:
-            keyring.delete(
-                self.key_with_pass.fingerprint,
-                passphrase=self.key_with_pass.passphrase
-            )
-            self.assertEqual(mock_run.call_count, 2)
+        ring = PGPKeyring()
+        ring.detach_sign_file(pgp_key, "/tmp/out.sig", input_path, clear_sign=True)
+
+        _, kwargs = mock_gpg.sign_file.call_args
+        self.assertTrue(kwargs["clearsign"])

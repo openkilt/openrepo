@@ -15,20 +15,25 @@
 import logging
 import os
 import shutil
-import time
 import subprocess
+import time
+
 from django.conf import settings
-from repo.models import Repository, Package, Build, BuildLogLine
+from django.db.models import F
+
+from repo.models import Build, BuildLogLine, Package, Repository
 from repo.storage.keyring import PGPKeyring
+
 logger = logging.getLogger("openrepo_web")
 
 
-class BuildLogEntry():
-    '''
+class BuildLogEntry:
+    """
     Used to annotate sections of work during the build process.  Execution time is recorded,
     and messages are updated on the db after the command is written so that the web ui can display
     in real-time
-    '''
+    """
+
     def __init__(self, command, log_line, repo_uid):
         self.start_timestamp = time.time()
         self.command = command
@@ -52,13 +57,12 @@ class BuildLogEntry():
         self.log_line.loglevel = loglevel
 
 
-
 class BaseRepoAdapter:
 
-    BUILDLOG_DEBUG = 'debug'
-    BUILDLOG_INFO = 'info'
-    BUILDLOG_WARNING = 'warning'
-    BUILDLOG_ERROR = 'error'
+    BUILDLOG_DEBUG = "debug"
+    BUILDLOG_INFO = "info"
+    BUILDLOG_WARNING = "warning"
+    BUILDLOG_ERROR = "error"
 
     def __init__(self, repo_db_obj):
 
@@ -68,9 +72,7 @@ class BaseRepoAdapter:
         self.build = None
         self.log_number = 0
         # The <origin> tab will get swapped out in JavaScript by the browser
-        self.base_url = f'<origin>/{self.repo_uid}'
-
-
+        self.base_url = f"<origin>/{self.repo_uid}"
 
     def _copy_packages(self, dest_dir):
 
@@ -89,14 +91,14 @@ class BaseRepoAdapter:
                     os.remove(dst_sym)
                 os.symlink(src_sym, dst_sym)
 
-    def _buildlog_write(self, command, message='', loglevel=BUILDLOG_INFO, is_complete=True):
-        '''
+    def _buildlog_write(self, command, message="", loglevel=BUILDLOG_INFO, is_complete=True):
+        """
         Write a message to the build log so that the status can be monitored
         :param command: The CLI command, or the intention of the operatoin
         :param message: The CLI response or outcome from the operation
         :param loglevel: level of log message.  Controls filtering/coloring in web output
         :return:
-        '''
+        """
 
         log_line = BuildLogLine()
         log_line.build = self.build
@@ -113,36 +115,36 @@ class BaseRepoAdapter:
         return log_line
 
     def _buildlog_section(self, command, loglevel=BUILDLOG_INFO):
-        '''
+        """
         Meant to be run as a "with" statement to auto log start of sections
         :param command: Section name
         :param loglevel:
         :return:
-        '''
+        """
         log_line = self._buildlog_write(command, loglevel=loglevel, is_complete=False)
         return BuildLogEntry(command, log_line, self.repo_uid)
 
     def _generate_repo_structure(self, repo_path):
-        '''
+        """
         Implement this for each repo adapter.  The task should fully generate the repository metadata
         to 'copy' files into the repo folders, call self._copy_packages()
         :param repo_path: The path to the repo folder to generate the metadata
         :return:
-        '''
+        """
         raise Exception("This function should always be implemented in child class for a particular repo")
 
     def _get_repo_instructions(self):
-        '''
+        """
         Return a relevant address for the Repo.  Ideally this would be the full config option that can be copied/pasted
         to configure the repo.
         :return:
-        '''
+        """
         raise Exception("This function should always be implemented in child class for a particular repo")
 
     def _clean_old_dirs(self, cur_repo_dir):
 
         alldirs = os.listdir(settings.REPO_WWW_PATH)
-        prefix = f'{self.repo_uid}.'
+        prefix = f"{self.repo_uid}."
         for d in alldirs:
             if d.startswith(prefix) and d != cur_repo_dir:
                 fullpath = os.path.join(settings.REPO_WWW_PATH, d)
@@ -152,9 +154,9 @@ class BaseRepoAdapter:
     def _save_public_key(self, repo_path):
 
         # Export the public key to the repo for convenience
-        with self._buildlog_section("Updating PGP keys") as log_entry:
-            pgp_output_path = os.path.join(repo_path, 'public.gpg')
-            with open(pgp_output_path, 'w') as outf:
+        with self._buildlog_section("Updating PGP keys"):
+            pgp_output_path = os.path.join(repo_path, "public.gpg")
+            with open(pgp_output_path, "w") as outf:
                 self._buildlog_write(f"Writing PGP key to {pgp_output_path}")
                 outf.write(self.pgp_key.public_key_pem)
 
@@ -162,12 +164,19 @@ class BaseRepoAdapter:
 
         working_dir = repo_path
         custom_env = os.environ.copy()
-        custom_env['GNUPGHOME'] = settings.KEYRING_PATH
+        custom_env["GNUPGHOME"] = settings.KEYRING_PATH
 
         for command in commands:
             with self._buildlog_section(command) as log_entry:
-                proc_status = subprocess.run(command, cwd=working_dir, env=custom_env, stdout=subprocess.PIPE,
-                                             stderr=subprocess.STDOUT, text=True, shell=True)
+                proc_status = subprocess.run(
+                    command,
+                    cwd=working_dir,
+                    env=custom_env,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    shell=True,
+                )
                 message_output = proc_status.stdout
 
                 log_entry.set_message(message_output)
@@ -187,10 +196,9 @@ class BaseRepoAdapter:
 
         self.packages = Package.objects.filter(repo__repo_uid=self.repo_uid)
 
-        # First increment the count for this repo
+        # Atomically increment refresh_count and re-fetch to get the assigned value
+        Repository.objects.filter(repo_uid=self.repo_uid).update(refresh_count=F("refresh_count") + 1)
         repo_db_obj = Repository.objects.get(repo_uid=self.repo_uid)
-        repo_db_obj.refresh_count = repo_db_obj.refresh_count + 1
-        repo_db_obj.save()
 
         self.log_number = 0
         self.build = Build()
@@ -203,11 +211,11 @@ class BaseRepoAdapter:
         success = False
         try:
             # Format is repo_uid.refresh_count with 9 digits of 0 padding
-            dirname = f'{self.repo_uid}.{repo_db_obj.refresh_count:=09}'
+            dirname = f"{self.repo_uid}.{repo_db_obj.refresh_count:=09}"
             dest_dir = os.path.join(settings.REPO_WWW_PATH, dirname)
 
             if os.path.exists(dest_dir):
-                with self._buildlog_section(f"Removing old directory path {dest_dir}") as log_entry:
+                with self._buildlog_section(f"Removing old directory path {dest_dir}"):
                     shutil.rmtree(dest_dir)
 
             # Create directory path for repo
@@ -228,14 +236,14 @@ class BaseRepoAdapter:
                 self.build.completion_status = Build.STATUS_COMPLETE_SUCCESS
                 self.build.total_duration_sec = time.time() - build_start_time
                 self.build.save()
-                with self._buildlog_section(f"Updating repo symlink to point to {dirname}") as log_entry:
+                with self._buildlog_section(f"Updating repo symlink to point to {dirname}"):
                     repo_uid_symlink = os.path.join(settings.REPO_WWW_PATH, self.repo_uid)
                     if os.path.exists(repo_uid_symlink):
                         os.unlink(repo_uid_symlink)
 
                     os.symlink(dirname, repo_uid_symlink)
 
-                with self._buildlog_section(f"Cleaning old directories in {settings.REPO_WWW_PATH}") as log_entry:
+                with self._buildlog_section(f"Cleaning old directories in {settings.REPO_WWW_PATH}"):
                     self._clean_old_dirs(dirname)
             else:
                 self.build.completion_status = Build.STATUS_COMPLETE_ERROR

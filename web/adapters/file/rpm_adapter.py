@@ -1,8 +1,11 @@
+from datetime import datetime
+
 import rpmfile
-from datetime import datetime, timezone
-from .base_adapter import RepoFileAdapter
 from dateutil import parser
 from django.conf import settings
+
+from .base_adapter import RepoFileAdapter
+
 
 class RpmFileAdapter(RepoFileAdapter):
 
@@ -37,25 +40,23 @@ class RpmFileAdapter(RepoFileAdapter):
                     value = "\n" + value
 
                 self.fields[header] = value
-                #line = "%s: %s" % (headers_titles.get(header).ljust(12), value)
-                #print(line)
+                # line = "%s: %s" % (headers_titles.get(header).ljust(12), value)
+                # print(line)
 
     def get_name(self):
-        return self.fields['name']
+        return self.fields["name"]
 
     def get_architecture(self):
-        return self.fields['arch']
+        return self.fields["arch"]
 
     def get_version(self):
         if settings.RPM_VERSION_IGNORE_BUILD_NUM:
-            return self.fields['version']
+            return self.fields["version"]
         else:
-            return self.fields['version'] + "." + self.fields['release']
-
+            return self.fields["version"] + "." + self.fields["release"]
 
     def get_description(self):
-        return self.fields['description']
+        return self.fields["description"]
 
     def get_builddate(self):
-        return parser.parse(self.fields['buildtime'])
-
+        return parser.parse(self.fields["buildtime"])

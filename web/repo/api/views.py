@@ -12,39 +12,49 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import rest_framework.exceptions
-from django.contrib.auth.models import User
-from rest_framework import viewsets
-from rest_framework.decorators import action
-from django.http import HttpResponse
+import logging
+import os
 from datetime import datetime
-from django.db.models.functions import Lower
-from rest_framework.response import Response
-from .filters import BuildFilter, BuildLogFilter
+
+import pytz
+import rest_framework.exceptions
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.validators import validate_email
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
-from .serializers import UserSerializer, UserDetailSerializer, RepoSummarySerializer, \
-                        PackageSummarySerializer, RepoDetailSerializer, PackageDetailSerializer, \
-                        UploadSerializer, UploadTaskSerializer, PGPKeySerializer, CopySerializer, BuildSerializer, BuildLogSerializer
+from rest_framework import viewsets
+from rest_framework.response import Response
+
+from adapters.file import create_adapter
+from repo.models import Build, BuildLogLine, Package, PGPSigningKey, Repository
 from repo.storage.filemanager import RepoFileManager
 from repo.storage.keyring import PGPKeyring
-from repo.models import Package, UploadTask, Repository, PGPSigningKey, Build, BuildLogLine
-from django.conf import settings
-from django.core.validators import validate_email
-from .util import MultipleFieldLookupMixin, reduce_to_uid
-from .upload_processor import process_upload
-import os
-import threading
-import hashlib
-import logging
+
+from .filters import BuildFilter, BuildLogFilter
+from .serializers import (
+    BuildLogSerializer,
+    BuildSerializer,
+    CopySerializer,
+    PackageDetailSerializer,
+    PackageSummarySerializer,
+    PGPKeySerializer,
+    RepoDetailSerializer,
+    RepoSummarySerializer,
+    UploadSerializer,
+    UserDetailSerializer,
+    UserSerializer,
+)
+from .util import MultipleFieldLookupMixin, compute_sha512
 
 logger = logging.getLogger("openrepo_web")
+
 
 class UserViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
-    queryset = User.objects.all().order_by('-date_joined')
+
+    queryset = User.objects.all().order_by("-date_joined")
     serializer_class = UserSerializer
 
 
@@ -52,46 +62,44 @@ class ReposViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows groups to be viewed or edited.
     """
-    lookup_field = 'repo_uid'
-    queryset = Repository.objects.all().order_by('repo_uid').select_related('promote_to').prefetch_related('write_access')
+
+    lookup_field = "repo_uid"
+    queryset = Repository.objects.all().order_by("repo_uid")
     serializer_class = RepoSummarySerializer
 
     def get_serializer_class(self):
         # On create, we want to provide more details than on the list retrieve
-        if self.action == 'create':
+        if self.action == "create":
             return RepoDetailSerializer
         return RepoSummarySerializer
 
     def perform_create(self, serializer):
-
-        repo = serializer.save()
-
-        # Create the repo on disk
+        serializer.save()
 
 
 class PGPKeysViewSet(viewsets.ModelViewSet):
 
-    queryset = PGPSigningKey.objects.all().order_by('-name')
+    queryset = PGPSigningKey.objects.all().order_by("-name")
     serializer_class = PGPKeySerializer
 
-    lookup_field = 'fingerprint'
+    lookup_field = "fingerprint"
 
     def create(self, request, *args, **kwargs):
 
-        full_name = request.POST.get('name')
-        email = request.POST.get('email')
+        full_name = request.POST.get("name")
+        email = request.POST.get("email")
 
         if len(full_name) < 1 or len(full_name) > 1024:
-            raise rest_framework.exceptions.ValidationError({'name': "Invalid name"})
+            raise rest_framework.exceptions.ValidationError({"name": "Invalid name"})
 
         try:
             validate_email(email)
-        except:
-            raise rest_framework.exceptions.ValidationError({'email': "Invalid e-mail address"})
+        except Exception:
+            raise rest_framework.exceptions.ValidationError({"email": "Invalid e-mail address"})
 
         keyring = PGPKeyring()
 
-        new_key = keyring.generate_key(full_name, email)
+        keyring.generate_key(full_name, email)
 
         return Response(status=rest_framework.status.HTTP_201_CREATED)
 
@@ -103,9 +111,10 @@ class PGPKeysViewSet(viewsets.ModelViewSet):
             repos = []
             for repo in referencing_repos:
                 repos.append(repo.repo_uid)
-            return Response(status=rest_framework.status.HTTP_400_BAD_REQUEST, data = {
-                'detail': 'Unable to delete.  You must first remove this key from repos: ' + ", ".join(repos)
-            })
+            return Response(
+                status=rest_framework.status.HTTP_400_BAD_REQUEST,
+                data={"detail": "Unable to delete.  You must first remove this key from repos: " + ", ".join(repos)},
+            )
 
         keyring = PGPKeyring()
         keyring.delete(instance.fingerprint, passphrase=instance.passphrase)
@@ -113,13 +122,6 @@ class PGPKeysViewSet(viewsets.ModelViewSet):
         self.perform_destroy(instance)
         return Response(status=rest_framework.status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['get'])
-    def download(self, request, fingerprint=None):
-        key = self.get_object()
-        filename = f"{key.fingerprint[-16:]}.asc"
-        response = HttpResponse(key.public_key_pem, content_type='application/pgp-keys')
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        return response
 
 class WhoAmIViewSet(rest_framework.mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     serializer_class = UserDetailSerializer
@@ -127,11 +129,13 @@ class WhoAmIViewSet(rest_framework.mixins.RetrieveModelMixin, viewsets.GenericVi
     def get_object(self):
         return self.request.user
 
+
 class RepoViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows groups to be viewed or edited.
     """
-    lookup_field = 'repo_uid'
+
+    lookup_field = "repo_uid"
     queryset = Repository.objects.all()
     serializer_class = RepoDetailSerializer
 
@@ -141,19 +145,19 @@ class RepoViewSet(viewsets.ModelViewSet):
         instance = serializer.save()
 
         # If they update the PGP key, mark the repo as stale so it's regenerated
-        if original_object.signing_key != changes['signing_key']:
-            logger.debug(f"PGP key changed, marking repo as stale")
+        if original_object.signing_key != changes["signing_key"]:
+            logger.debug("PGP key changed, marking repo as stale")
             instance.is_stale = True
             instance.save()
-
 
 
 class PackagesViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows groups to be viewed or edited.
     """
-    lookup_field = 'repo__repo_uid'
-    queryset = Package.objects.all()
+
+    lookup_field = "repo__repo_uid"
+    queryset = Package.objects.all().order_by("-filename")
     serializer_class = PackageSummarySerializer
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['package_name', 'filename', 'version', 'architecture']
@@ -165,55 +169,37 @@ class PackagesViewSet(viewsets.ModelViewSet):
         This view should return a list of all the purchases for
         the user as determined by the username portion of the URL.
         """
-        repo_uid = self.kwargs['repo_uid']
-        return Package.objects.filter(repo__repo_uid=repo_uid).select_related('repo')
+        repo_uid = self.kwargs["repo_uid"]
+        return Package.objects.filter(repo__repo_uid=repo_uid)
 
-    def filter_queryset(self, queryset):
-        queryset = super().filter_queryset(queryset)
-        ordering = self.request.query_params.get('ordering')
-        if ordering:
-            parts = ordering.split(',')
-            new_parts = []
-            for part in parts:
-                if part.lstrip('-') == 'package_name':
-                    if part.startswith('-'):
-                        new_parts.append(Lower('package_name').desc())
-                    else:
-                        new_parts.append(Lower('package_name').asc())
-                else:
-                    new_parts.append(part)
-            if new_parts:
-                queryset = queryset.order_by(*new_parts)
-        return queryset
 
 class PackageViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     """
     API endpoint that allows groups to be viewed or edited.
     """
-    lookup_fields = ('repo__repo_uid', 'package_uid')
+
+    lookup_fields = ("repo__repo_uid", "package_uid")
     queryset = Package.objects.all()
     serializer_class = PackageDetailSerializer
 
 
-
-class BuildViewSet(rest_framework.mixins.ListModelMixin,
-                   viewsets.GenericViewSet):
+class BuildViewSet(rest_framework.mixins.ListModelMixin, viewsets.GenericViewSet):
     """
     API endpoint that allows groups to be viewed or edited.
     """
-    queryset = Build.objects.all().order_by('build_number').select_related('repo')
+
+    queryset = Build.objects.all()
     serializer_class = BuildSerializer
 
     filter_backends = [DjangoFilterBackend]
     filterset_class = BuildFilter
 
 
-
-class BuildLogViewSet(rest_framework.mixins.ListModelMixin,
-                      viewsets.GenericViewSet):
+class BuildLogViewSet(rest_framework.mixins.ListModelMixin, viewsets.GenericViewSet):
     """
     API endpoint that allows groups to be viewed or edited.
     """
+
     # lookup_fields = ('repo__repo_uid', 'package_uid')
     queryset = BuildLogLine.objects.all().select_related('build')
     serializer_class = BuildLogSerializer
@@ -237,7 +223,7 @@ class CopyViewSet(viewsets.ViewSet):
         except Package.DoesNotExist:
             raise rest_framework.exceptions.NotFound(f"Package {package_uid} not found in repo {repo_uid}")
 
-        dst_repo_uid = request.POST.get('dest_repo_uid')
+        dst_repo_uid = request.POST.get("dest_repo_uid")
         logger.debug(request.POST)
         logger.debug(f"Copying {repo_uid} / {package_uid} to {dst_repo_uid}")
 
@@ -251,20 +237,28 @@ class CopyViewSet(viewsets.ViewSet):
         self.check_object_permissions(request, dst_repo)
 
         # Make sure destination repo is either the same type or is generic
-        if dst_repo.repo_type != 'files' and dst_repo.repo_type != src_repo.repo_type:
-            raise rest_framework.exceptions.ParseError(f"Incompatible destination repository.  Source repo is {src_repo.repo_type} "
-                                                       f"destination repo is {dst_repo.repo_type}")
+        if dst_repo.repo_type != "files" and dst_repo.repo_type != src_repo.repo_type:
+            raise rest_framework.exceptions.ParseError(
+                f"Incompatible destination repository.  Source repo is {src_repo.repo_type} "
+                f"destination repo is {dst_repo.repo_type}"
+            )
 
         # For generic repo, we always want to refer to the file by filename, not parsed package name
-        if dst_repo.repo_type == 'files':
+        if dst_repo.repo_type == "files":
             package.package_name = package.filename
 
-        if Package.objects.filter(repo=dst_repo, package_name=package.package_name, version=package.version).count() > 0:
-            raise rest_framework.exceptions.ParseError(f"Package {package.package_name} v{package.version} already exists in destination repo {dst_repo}")
+        if (
+            Package.objects.filter(repo=dst_repo, package_name=package.package_name, version=package.version).count()
+            > 0
+        ):
+            raise rest_framework.exceptions.ParseError(
+                f"Package {package.package_name} v{package.version} already exists in destination repo {dst_repo}"
+            )
 
         if Package.objects.filter(repo=dst_repo, package_uid=package.package_uid):
-            raise rest_framework.exceptions.ParseError(f"An identical package already exists in the destination repo {package.package_uid}")
-
+            raise rest_framework.exceptions.ParseError(
+                f"An identical package already exists in the destination repo {package.package_uid}"
+            )
 
         # Set "pk" to none in order to make the save create a new model
         # Thus copying it from one to another
@@ -281,6 +275,7 @@ class CopyViewSet(viewsets.ViewSet):
 
         return Response(response)
 
+
 # ViewSets define the view behavior.
 class UploadViewSet(viewsets.ViewSet):
     serializer_class = UploadSerializer
@@ -293,20 +288,16 @@ class UploadViewSet(viewsets.ViewSet):
 
         self.check_object_permissions(request, repo)
 
-        file_uploaded = request.FILES.get('package_file')
-        overwrite_str = request.POST.get('overwrite', '0').lower()
-        overwrite = overwrite_str in ('true', '1', 'yes')
-        filesize = file_uploaded.size
+        file_uploaded = request.FILES.get("package_file")
+        overwrite_str = request.POST.get("overwrite", "0").lower()
+        overwrite = overwrite_str in ("true", "1", "yes")
         filename = file_uploaded.name
 
         file_manager = RepoFileManager()
         stored_filename = file_manager.get_filepath()
         full_stored_filepath = os.path.join(settings.STORAGE_PATH, stored_filename)
 
-        os.makedirs(os.path.dirname(full_stored_filepath), exist_ok=True)
-
-        sha512_hash = hashlib.sha512()
-        with open(full_stored_filepath, 'wb') as outf:
+        with open(full_stored_filepath, "wb") as outf:
             logger.debug(f"Writing file to {full_stored_filepath}")
             for chunk in file_uploaded.chunks():
                 outf.write(chunk)
@@ -314,30 +305,66 @@ class UploadViewSet(viewsets.ViewSet):
 
         sha512 = sha512_hash.hexdigest()
 
-        task = UploadTask.objects.create(
-            repo=repo,
-            status='stored',
-            filename=filename,
-            filesize=filesize,
-            overwrite=overwrite,
-            stored_path=full_stored_filepath,
-            sha512=sha512,
-        )
+            if file_info_adapter is None:
+                raise rest_framework.exceptions.ParseError("Error determining file type from repo")
+        except rest_framework.exceptions.ParseError:
+            os.remove(full_stored_filepath)
+            raise
+        except Exception:
+            os.remove(full_stored_filepath)
+            raise rest_framework.exceptions.ParseError("Error processing uploaded file")
+
+        if (
+            Package.objects.filter(
+                repo=repo,
+                package_name=file_info_adapter.get_name(),
+                architecture=file_info_adapter.get_architecture(),
+                version=file_info_adapter.get_version(),
+            ).count()
+            > 0
+        ):
+
+            if overwrite:
+                Package.objects.get(
+                    repo=repo,
+                    package_name=file_info_adapter.get_name(),
+                    architecture=file_info_adapter.get_architecture(),
+                    version=file_info_adapter.get_version(),
+                ).delete()
+            else:
+                raise rest_framework.exceptions.ParseError(
+                    f"Package {file_info_adapter.get_name()} version {file_info_adapter.get_version()} "
+                    f"already exists in destination repo {repo_uid} and 'overwrite' is not specified"
+                )
+
+        # Check if this package (with the same checksum) has already been uploaded in another repo.  If so,
+        # copy the entry rather than save a new file
+        sha512 = compute_sha512(full_stored_filepath)
+        existing_pkg = Package.objects.filter(checksum_sha512=sha512).exclude(repo=repo).all()
+        if len(existing_pkg) > 0:
+            package = existing_pkg[0]
+            logger.debug(f"Copying existing entry {package.package_uid}")
+            package.pk = None
+            os.unlink(full_stored_filepath)
+        else:
+            package = Package()
+            package.package_uid = stored_filename.replace("/", "-")
+
+        package.repo = repo
+        package.upload_date = datetime.now(tz=pytz.utc)
+        package.filename = filename
+        package.build_date = file_info_adapter.get_builddate()
+        package.architecture = file_info_adapter.get_architecture()
+        package.version = file_info_adapter.get_version()
+        package.package_name = file_info_adapter.get_name()
+        package.checksum_sha512 = sha512
+        package.save()
 
         thread = threading.Thread(target=process_upload, args=(task.pk,))
         thread.start()
 
-        return Response({'task_id': task.pk}, status=202)
-
-
-class UploadStatusView(viewsets.ViewSet):
-
-    def retrieve(self, request, task_id):
-        try:
-            task = UploadTask.objects.get(pk=task_id)
-        except UploadTask.DoesNotExist:
-            raise rest_framework.exceptions.NotFound("Upload task not found")
-
-        serializer = UploadTaskSerializer(task, context={'request': request})
-        return Response(serializer.data)
-
+        serializer = PackageDetailSerializer(package)
+        response = serializer.data
+        # TODO: Process the file here and respond with the new package info via the package serializer
+        # response = f"POST API {repo_uid} and you have uploaded a {content_type} file"
+        return Response(response)

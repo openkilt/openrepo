@@ -1,0 +1,16 @@
+[run]
+source = .
+omit =
+    */migrations/*
+    */tests/*
+    manage.py
+    openrepo/asgi.py
+    openrepo/wsgi.py
+    adapters/file/cli_inspect.py
+
+[report]
+skip_covered = False
+show_missing = True
+
+[html]
+directory = htmlcov

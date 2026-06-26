@@ -1,0 +1,19 @@
+[flake8]
+max-line-length = 120
+exclude =
+    migrations,
+    __pycache__,
+    .git,
+    .venv,
+    venv
+# E501 long lines in shell command strings within adapter files are acceptable
+per-file-ignores =
+    adapters/repo/deb_repo.py: E501
+    adapters/repo/rpm_repo.py: E501
+    adapters/repo/base_repo.py: E501
+    repo/worker/bgworker.py: E501
+    openrepo/settings.py: E501
+    repo/api/authentication.py: E501
+    repo/api/serializers.py: E501
+    repo/models.py: E501
+    repo/apps.py: F401

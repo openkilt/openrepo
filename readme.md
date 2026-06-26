@@ -87,8 +87,8 @@ Repo UID is created when a new repo is created.
 
     # Create a new repo
     POST /api/repos/
-    Example: curl -X POST http://<your-openrepo-instance>:7376/api/repos/ -H 'Authorization: Token <your-user-token>' -H 'Content-Type: application/json' -d '{"repo_uid": "<repo-name>", "repo_type": "deb|rpm|files", "signing_key": "<FINGERPRINT_OF_SIGNINGKEY>"}'
-    A signing key must be created before creating a repo.
+    Example: curl -X POST http://<your-openrepo-instance>:7376/api/repos/ -H 'Authorization: Token <your-user-token>' -F "repo_uid=<repo-name>" -F "repo_type=<deb|rpm|files>" -F "signing_key=<FINGERPRINT_OF_SIGNINGKEY"
+    You need to create a SigningKey otherwise you can not create
 
     # Delete a repo
     DELETE /api/<repo>/

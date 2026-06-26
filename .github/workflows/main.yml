@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      OPENREPO_VAR_DIR: /tmp/openrepo/
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            createrepo-c \
+            gpg \
+            libapt-pkg-dev \
+            libpq-dev \
+            python3-dev \
+            python3-pip \
+            python3-venv
+
+      - name: Set up Python venv
+        run: |
+          python3 -m venv .venv
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
+
+      - name: Install Python dependencies
+        run: pip install -r web/requirements.txt
+
+      - name: Prepare var directory
+        run: mkdir -p /tmp/openrepo/packages /tmp/openrepo/keyring /tmp/openrepo/www /tmp/openrepo/rpmcache
+
+      - name: Run tests
+        working-directory: web
+        run: python manage.py test repo.tests --verbosity=2

@@ -13,6 +13,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from apt.debfile import DebPackage
+
 from .base_adapter import RepoFileAdapter
 
 
@@ -22,17 +23,17 @@ class DebFileAdapter(RepoFileAdapter):
 
         pkg = DebPackage(self.filepath)
         # import pprint
-        #pprint.pprint(pkg.filelist)
-        #pprint.pprint(pkg.control_filelist)
+        # pprint.pprint(pkg.filelist)
+        # pprint.pprint(pkg.control_filelist)
 
-        self.control = pkg.control_content('control')
+        self.control = pkg.control_content("control")
         self.pkgname = pkg._sections["Package"]
         self.architecture = pkg._sections["Architecture"]
         self.version = pkg._sections["Version"]
         self.description = pkg._sections["Description"]
 
-        #print(pkg._sections)
-        #print(f"{pkgname} {architecture} {debver}")
+        # print(pkg._sections)
+        # print(f"{pkgname} {architecture} {debver}")
 
     def get_name(self):
         return self.pkgname

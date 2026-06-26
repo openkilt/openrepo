@@ -12,10 +12,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from django.conf import settings
+import os
 import random
 import string
-import os
+
+from django.conf import settings
+
 
 class RepoFileManager:
 
@@ -24,8 +26,8 @@ class RepoFileManager:
 
     def _generate_random_filename(self):
         letters = string.ascii_lowercase
-        path_prefix = ''.join(random.choice(letters) for i in range(settings.STORAGE_PREFIX_DEPTH))
-        filename = ''.join(random.choice(letters) for i in range(settings.STORAGE_FILENAME_LENGTH))
+        path_prefix = "".join(random.choice(letters) for i in range(settings.STORAGE_PREFIX_DEPTH))
+        filename = "".join(random.choice(letters) for i in range(settings.STORAGE_FILENAME_LENGTH))
 
         return os.path.join(path_prefix, filename)
 

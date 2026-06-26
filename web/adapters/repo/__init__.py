@@ -12,15 +12,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from .deb_repo import DebRepoAdapter
-from .rpm_repo import RpmRepoAdapter
+from .deb_repo import DepRepoAdapter
 from .generic_repo import GenericRepoAdapter
+from .rpm_repo import RpmRepoAdapter
+
 
 def get_repo_adapter(repo_obj):
-    if repo_obj.repo_type == 'deb':
-        return DebRepoAdapter(repo_obj)
-    elif repo_obj.repo_type == 'rpm':
+    if repo_obj.repo_type == "deb":
+        return DepRepoAdapter(repo_obj)
+    elif repo_obj.repo_type == "rpm":
         return RpmRepoAdapter(repo_obj)
-    elif repo_obj.repo_type == 'files':
+    elif repo_obj.repo_type == "files":
         return GenericRepoAdapter(repo_obj)
     raise Exception("Not implemented")
