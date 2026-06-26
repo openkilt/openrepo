@@ -52,6 +52,7 @@
 
     import PackageDataService from "../services/package_service";
     import {logger} from '@/logger.ts'
+    import {waitFor} from '@/utils.ts'
 
     export default {
         name: "add-repo",
@@ -70,15 +71,6 @@
                 this.dialog_progress = 0;
                 this.dialog_error_messages = '';
                 logger.debug("Reset dialog");
-            },
-            waitFor(conditionFunction) {
-
-                const poll = resolve => {
-                    if(conditionFunction()) resolve();
-                    else setTimeout(_ => poll(resolve), 400);
-                }
-
-                return new Promise(poll);
             },
             
             deletePackages() {
@@ -111,7 +103,7 @@
 
                 // http requests and responses are async.  So, use this function to wait for them to complete
                 // using "count" as a proxy for the operations to be done.
-                this.waitFor(_ => count >= this.selected_pkgs.length)
+                waitFor(() => count >= this.selected_pkgs.length)
                 .then(_ => {
                     logger.debug('All deletes complete');
 

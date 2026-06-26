@@ -1,54 +1,63 @@
-# Start with a node.js build image to compile the vue.js app distributables
-FROM node:20.14.0 AS vuebuilder
-
-WORKDIR /build/openrepo/
-
+# Stage 1: Build Vue.js frontend
+FROM node:20.14.0 AS vue-builder
+WORKDIR /build/openrepo
 COPY frontend/ ./
+RUN npm install && npm run build
 
-RUN npm install && \
-    npm run build
-
-# Web app is compiled now to /build/openrepo/dist/
-
-
-# Now build the production image
-FROM ubuntu:24.04
-
+# Stage 2: Build Python dependencies
+FROM ubuntu:24.04 AS python-builder
 RUN apt-get update && apt-get install -y \
-      apt-utils          \
-      createrepo-c       \
-      curl               \
-      git                \   
-      gpg                \
-      gzip               \
-      libapt-pkg-dev     \
-      libpq-dev          \
-      python3            \
-      python3-pip        \
-      python3-venv       \
-      nginx
-      
+    git \
+    libapt-pkg-dev \
+    libpq-dev \
+    python3 \
+    python3-pip \
+    python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY web/requirements.txt .
+RUN python3 -m venv /venv && \
+    /venv/bin/pip install --no-cache-dir -r requirements.txt
+
+# Stage 3: Production runtime image
+FROM ubuntu:24.04
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-utils \
+    createrepo-c \
+    curl \
+    gnupg \
+    gzip \
+    libapt-pkg6.0 \
+    libpq5 \
+    nginx \
+    python3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/createrepo_c /usr/bin/createrepo
+
 WORKDIR /app
 
-
-# Copy the requirements.txt first and install dependencies, so that this can be cached
-COPY web/requirements.txt ./django/requirements.txt
-RUN python3 -m venv /venv
+# Copy Python virtual environment
+COPY --from=python-builder /venv /venv
 ENV PATH="/venv/bin:$PATH"
 
-RUN ln -s /usr/bin/createrepo_c /usr/bin/createrepo && \
-    pip3 install --no-cache-dir -r django/requirements.txt && \
-    mkdir -p /var/lib/openrepo/packages/
+# Copy compiled Vue frontend
+COPY --from=vue-builder /build/openrepo/dist /app/frontend-dist
 
-# Copy compiled vue app
-COPY --from=vuebuilder /build/openrepo/dist ./frontend-dist/
+# Copy Django app
+COPY web/repo/templates/base.html /tmp/base.html.check
+RUN echo "=== BASE.HTML AT BUILD TIME ===" && cat /tmp/base.html.check && echo "=== END ==="
+COPY web /app/django
 
-# Copy Django app and configuration
-COPY web ./django
+# Copy Nginx configuration
 COPY deploy/nginx/nginx.conf.prod /etc/nginx/nginx.conf
+
+# Copy entrypoint script
 COPY deploy/run_openrepoweb /usr/bin/
 
-RUN ./django/manage.py collectstatic --noinput
+# Document container ports (nginx serves on 8080)
+EXPOSE 8080
 
-#CMD ["/usr/bin/run_openrepoweb"]
-#EXPOSE 8000
+# Collect Django static files
+RUN mkdir -p /var/lib/openrepo/packages/ && \
+    /venv/bin/python /app/django/manage.py collectstatic --noinput

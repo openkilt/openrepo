@@ -1,3 +1,4 @@
 prettytable==3.5.0
 pyinstaller==5.13.0
-requests==2.28.2
+requests>=2.31.0,<3.0
+responses==0.25.3

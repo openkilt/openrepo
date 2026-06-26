@@ -1,21 +1,4 @@
-<!--
- Copyright 2022 by Open Kilt LLC. All rights reserved.
- This file is part of the OpenRepo Repository Management Software (OpenRepo)
- OpenRepo is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License
- version 3 as published by the Free Software Foundation
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>.
--->
-
 <template>
-    <v-app>
     <v-container class="my-5">
 
         <v-layout row wrap>
@@ -26,9 +9,23 @@
         </v-layout>
         <v-divider></v-divider>
 
-        <v-card  flat v-for="pgp_key in pgp_keys" :key="pgp_key.email">
+        <v-skeleton-loader
+          v-if="loading"
+          type="list-item-three-line@3"
+        ></v-skeleton-loader>
 
-            
+        <v-alert
+          v-else-if="pgp_keys.length === 0"
+          density="compact"
+          type="info"
+          class="mb-4"
+        >
+          No signing keys configured. Create a new key or import one via CLI.
+        </v-alert>
+
+        <v-card  flat v-for="pgp_key in pgp_keys" :key="pgp_key.email" v-else>
+
+
             <v-layout row wrap class="pgp_key">
                 <v-col sm="9">
                     <strong>{{pgp_key.name}} &lt;{{ pgp_key.email }}&gt;</strong>
@@ -38,10 +35,20 @@
 
                 <v-col  align="right" sm="3">
 
-                    <!-- delete button -->
+                    <v-btn
+                      variant="text" icon color="primary"
+                      :href="downloadUrl(pgp_key.fingerprint)"
+                      target="_blank"
+                      aria-label="Download public key"
+                    >
+                        <v-icon>mdi-download</v-icon>
+                        <v-tooltip activator="parent" location="top">Download public key</v-tooltip>
+                    </v-btn>
+
                     <v-dialog v-model="dialog_delete" max-width="400">
                         <template v-slot:activator="{ props }">
-                            <v-btn @click="resetDialog()" v-bind="props" variant="text" icon color="error">
+                            <v-btn @click="resetDialog()" v-bind="props" variant="text" icon color="error"
+                                   aria-label="Delete signing key">
                                 <v-icon>mdi-delete</v-icon>
                                 <v-tooltip activator="parent" location="top">Delete</v-tooltip>
                             </v-btn>
@@ -77,7 +84,8 @@
                 <v-dialog max-width="700" v-model="dialog_newkey">
                     <template v-slot:activator="{ props }">
 
-                    <v-btn @click="resetDialog();" v-bind="props" color="primary">
+                    <v-btn @click="resetDialog();" v-bind="props" color="primary"
+                           aria-label="Create new signing key">
                         New Signing Key
                     </v-btn>
                     </template>
@@ -90,11 +98,11 @@
                             <v-row>
                             <v-col cols="12">
 
-                                <v-text-field v-model="dialog_create_key_data.name" 
+                                <v-text-field v-model="dialog_create_key_data.name"
                                     :error-messages="newkey_error_response.name"
                                     label="Name"></v-text-field>
 
-                                <v-text-field v-model="dialog_create_key_data.email" 
+                                <v-text-field v-model="dialog_create_key_data.email"
                                     :error-messages="newkey_error_response.email"
                                     label="E-Mail"></v-text-field>
 
@@ -127,7 +135,6 @@
             </v-col>
         </v-layout>
     </v-container>
-    </v-app>
 </template>
 
 <script lang="ts">
@@ -141,6 +148,7 @@ export default {
     },
     data() {
         return {
+            loading: true,
             dialog_newkey: false,
             dialog_newkey_isidle: true,
             dialog_delete: false,
@@ -176,16 +184,21 @@ export default {
             this.dialog_create_key_data.name = '';
             this.dialog_create_key_data.email = '';
         },
+        downloadUrl(fingerprint: string) {
+            return `/api/signingkeys/${fingerprint}/download/`;
+        },
         loadPgpKeys() {
+            this.loading = true;
             this.keys = []
             SigningKeyDataService.getAll()
             .then(response => {
-                // Only insert repos that have either the same repo type (e.g., "deb" or "rpm") or
-                // generic file repos.  It wouldn't make sense to copy a deb to an rpm or vice-versa
                 this.pgp_keys = response.data.results;
+                this.loading = false;
                 logger.debug(response.data);
             })
             .catch(e => {
+                this.loading = false;
+                console.error('Failed to load PGP keys:', e);
                 logger.debug(e);
             });
         },
@@ -197,10 +210,10 @@ export default {
                 this.loadPgpKeys();
 
                 this.dialog_newkey = false;
-            }) 
+            })
             .catch(e => {
                 this.newkey_error_response = e.response.data
-                this.dialog_newkey_isidle = false;  
+                this.dialog_newkey_isidle = false;
                 console.log(e);
             });
         },
@@ -214,13 +227,13 @@ export default {
                 this.dialog_delete = false;
 
             })
-            .catch(e => { 
+            .catch(e => {
                 if (typeof e.response != 'undefined' && typeof e.response.data.detail != 'undefined')
                     this.dialog_delete_error_messages = e.response.data.detail;
                 else
                     this.dialog_delete_error_messages = 'Error deleting key: ' + e.message;
             });
-            
+
         },
     },
     mounted() {

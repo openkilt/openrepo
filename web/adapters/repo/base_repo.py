@@ -79,11 +79,16 @@ class BaseRepoAdapter:
         with self._buildlog_section(f"Symlinking {len(self.packages)} packages") as log_entry:
             for package in self.packages:
                 src_sym = os.path.join(settings.STORAGE_PATH, package.relative_path())
-                dst_sym = os.path.join(dest_dir, package.filename)
+                base, ext = os.path.splitext(package.filename)
+                pool_name = f"{package.package_name}_{package.version}_{package.architecture}{ext}"
+                dst_sym = os.path.join(dest_dir, pool_name)
                 logger.debug(f"Symlinking {src_sym} to {dst_sym}")
                 if not os.path.isfile(src_sym):
                     log_entry.set_message(f"Unable to find source package file {src_sym}")
+                    continue
 
+                if os.path.lexists(dst_sym):
+                    os.remove(dst_sym)
                 os.symlink(src_sym, dst_sym)
 
     def _buildlog_write(self, command, message="", loglevel=BUILDLOG_INFO, is_complete=True):
@@ -202,6 +207,7 @@ class BaseRepoAdapter:
         self.build.completion_status = Build.STATUS_RUNNING
         self.build.save()
 
+        build_start_time = time.time()
         success = False
         try:
             # Format is repo_uid.refresh_count with 9 digits of 0 padding
@@ -228,6 +234,7 @@ class BaseRepoAdapter:
 
             if success:
                 self.build.completion_status = Build.STATUS_COMPLETE_SUCCESS
+                self.build.total_duration_sec = time.time() - build_start_time
                 self.build.save()
                 with self._buildlog_section(f"Updating repo symlink to point to {dirname}"):
                     repo_uid_symlink = os.path.join(settings.REPO_WWW_PATH, self.repo_uid)
@@ -249,6 +256,7 @@ class BaseRepoAdapter:
             self.build.completion_status = Build.STATUS_COMPLETE_SUCCESS
         else:
             self.build.completion_status = Build.STATUS_COMPLETE_ERROR
+        self.build.total_duration_sec = time.time() - build_start_time
         self.build.save()
 
         return success

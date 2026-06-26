@@ -82,6 +82,7 @@
     import PackageDataService from "../services/package_service";
     import RepoDataService from "../services/repo_service";
     import {logger} from '@/logger.ts'
+    import {waitFor} from '@/utils.ts'
 
     export default {
         name: "add-repo",
@@ -103,15 +104,6 @@
                 this.dialog_error_messages = '';
                 logger.debug("Reset dialog");
             },
-            waitFor(conditionFunction) {
-
-                const poll = resolve => {
-                    if(conditionFunction()) resolve();
-                    else setTimeout(_ => poll(resolve), 400);
-                }
-
-                return new Promise(poll);
-            },
 
             loadRepoList() {
                 console.log(this.promote)
@@ -130,6 +122,7 @@
                     logger.debug(response.data);
                 })
                 .catch(e => {
+                    this.dialog_error_messages = 'Error loading repo list: ' + e.message;
                     logger.debug(e);
                 });
             },
@@ -168,7 +161,7 @@
 
                 // Copies and responses are async.  So, use this function to wait for them to complete
                 // using "count" as a proxy for the operations to be done.
-                this.waitFor(_ => count >= this.selected_pkgs.length)
+                waitFor(() => count >= this.selected_pkgs.length)
                 .then(_ => {
                     logger.debug('All copies complete')
 

@@ -81,6 +81,7 @@ class RepoRestApiTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Repository.objects.count(), 0)
 
+    @patch('threading.Thread.start', lambda self: self.run())
     def test_package_upload_delete(self):
 
         REPO_UID = "pkgrepo"
@@ -109,10 +110,23 @@ class RepoRestApiTestCase(APITestCase):
                 HTTP_AUTHORIZATION=self.http_auth,
             )
 
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        task_id = response.data['task_id']
+
+        # Poll for completion (async upload; with mocked threading the
+        # background processing runs inline so completion is near-instant)
+        for _ in range(50):
+            status_resp = self.client.get(f'/api/upload-status/{task_id}/',
+                                          HTTP_AUTHORIZATION=self.http_auth)
+            if status_resp.data['status'] in ('completed', 'failed'):
+                break
+            time.sleep(0.2)
+
+        self.assertEqual(status_resp.data['status'], 'completed')
+
         package = Package.objects.get()
         disk_path = os.path.join(settings.STORAGE_PATH, package.package_uid.replace("-", "/"))
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Package.objects.count(), 1)
         self.assertTrue(os.path.isfile(disk_path))
 

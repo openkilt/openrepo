@@ -56,5 +56,6 @@ class Command(BaseCommand):
         new_key.fingerprint = fingerprint
         new_key.name = name
         new_key.email = email
+        new_key.passphrase = options.get('passphrase', '') or ''
         new_key.save()
         self.stdout.write(self.style.SUCCESS("Successfully imported key"))

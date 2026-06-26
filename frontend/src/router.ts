@@ -58,6 +58,11 @@ const routes = [
 //     name: "add",
 //     component: () => import("./components/AddTutorial.vue"),
 //   },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "not-found",
+    component: Home,
+  },
 ];
 
 export const router = createRouter({

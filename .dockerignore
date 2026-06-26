@@ -1,5 +1,11 @@
-/**/venv3/
-/**/node_modules/
+**/.git
+**/__pycache__
+**/*.pyc
+**/.env*
+**/venv3/
+**/node_modules/
 openrepo-data/
-/**/db.sqlite3
-/**/settings_local.py
+**/db.sqlite3
+**/settings_local.py
+**/.gitignore
+**/.DS_Store

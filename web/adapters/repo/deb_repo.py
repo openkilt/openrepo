@@ -28,7 +28,7 @@ logger = logging.getLogger("openrepo_web")
 DEB_ARCH_NAME = "any"
 
 
-class DepRepoAdapter(BaseRepoAdapter):
+class DebRepoAdapter(BaseRepoAdapter):
 
     def _get_repo_instructions(self):
         dest_gpg_path = f"/usr/share/keyrings/openrepo-{self.repo_uid}.gpg"

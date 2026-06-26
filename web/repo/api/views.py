@@ -117,7 +117,7 @@ class PGPKeysViewSet(viewsets.ModelViewSet):
             )
 
         keyring = PGPKeyring()
-        keyring.delete(instance.fingerprint)
+        keyring.delete(instance.fingerprint, passphrase=instance.passphrase)
 
         self.perform_destroy(instance)
         return Response(status=rest_framework.status.HTTP_204_NO_CONTENT)
@@ -159,6 +159,10 @@ class PackagesViewSet(viewsets.ModelViewSet):
     lookup_field = "repo__repo_uid"
     queryset = Package.objects.all().order_by("-filename")
     serializer_class = PackageSummarySerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ['package_name', 'filename', 'version', 'architecture']
+    ordering_fields = ['package_name', 'version', 'architecture', 'upload_date']
+    ordering = ['-upload_date']
 
     def get_queryset(self):
         """
@@ -197,7 +201,7 @@ class BuildLogViewSet(rest_framework.mixins.ListModelMixin, viewsets.GenericView
     """
 
     # lookup_fields = ('repo__repo_uid', 'package_uid')
-    queryset = BuildLogLine.objects.all()
+    queryset = BuildLogLine.objects.all().select_related('build')
     serializer_class = BuildLogSerializer
 
     filter_backends = [DjangoFilterBackend]
@@ -209,8 +213,15 @@ class CopyViewSet(viewsets.ViewSet):
     serializer_class = CopySerializer
 
     def create(self, request, repo_uid, package_uid):
-        src_repo = Repository.objects.get(repo_uid=repo_uid)
-        package = Package.objects.get(repo=src_repo, package_uid=package_uid)
+        try:
+            src_repo = Repository.objects.get(repo_uid=repo_uid)
+        except Repository.DoesNotExist:
+            raise rest_framework.exceptions.NotFound(f"Source repo_uid {repo_uid} not found")
+
+        try:
+            package = Package.objects.get(repo=src_repo, package_uid=package_uid)
+        except Package.DoesNotExist:
+            raise rest_framework.exceptions.NotFound(f"Package {package_uid} not found in repo {repo_uid}")
 
         dst_repo_uid = request.POST.get("dest_repo_uid")
         logger.debug(request.POST)
@@ -269,14 +280,12 @@ class CopyViewSet(viewsets.ViewSet):
 class UploadViewSet(viewsets.ViewSet):
     serializer_class = UploadSerializer
 
-    # def list(self, request):
-    #     return Response("GET API")
-
     def create(self, request, repo_uid):
-        repo = Repository.objects.get(repo_uid=repo_uid)
+        try:
+            repo = Repository.objects.get(repo_uid=repo_uid)
+        except Repository.DoesNotExist:
+            raise rest_framework.exceptions.NotFound(f"Repo {repo_uid} not found")
 
-        # Since DRF does not know that this "create" is associated with a repo, we have to tell it explicitly
-        # to check object permissions
         self.check_object_permissions(request, repo)
 
         file_uploaded = request.FILES.get("package_file")
@@ -292,9 +301,9 @@ class UploadViewSet(viewsets.ViewSet):
             logger.debug(f"Writing file to {full_stored_filepath}")
             for chunk in file_uploaded.chunks():
                 outf.write(chunk)
+                sha512_hash.update(chunk)
 
-        try:
-            file_info_adapter = create_adapter(repo.repo_type, full_stored_filepath, filename)
+        sha512 = sha512_hash.hexdigest()
 
             if file_info_adapter is None:
                 raise rest_framework.exceptions.ParseError("Error determining file type from repo")
@@ -351,9 +360,8 @@ class UploadViewSet(viewsets.ViewSet):
         package.checksum_sha512 = sha512
         package.save()
 
-        if repo.keep_only_latest:
-            # Delete all older versions of this package if "keep only latest" is set
-            Package.objects.filter(repo=repo, package_name=package.package_name).exclude(pk=package.pk).delete()
+        thread = threading.Thread(target=process_upload, args=(task.pk,))
+        thread.start()
 
         serializer = PackageDetailSerializer(package)
         response = serializer.data

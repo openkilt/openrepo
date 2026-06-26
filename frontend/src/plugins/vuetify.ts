@@ -1,44 +1,42 @@
-/**
- * Copyright 2022 by Open Kilt LLC. All rights reserved.
- * This file is part of the OpenRepo Repository Management Software (OpenRepo)
- * OpenRepo is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License
- * version 3 as published by the Free Software Foundation
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
-
-// Styles
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 
-// Vuetify
 import { createVuetify } from 'vuetify'
 
+const savedTheme = typeof localStorage !== 'undefined' ? localStorage.getItem('openrepo_theme') : null;
 
 export default createVuetify({
-
-  // theme: {
-  //   defaultTheme: 'openRepoTheme',
-  //   themes: {
-  //     openRepoTheme: {
-  //       dark: false,
-  //       colors: {
-  //       primary: '#03a9f4',
-  //       secondary: '#ffc107',
-  //       accent: '#3f51b5',
-  //       error: '#e91e63',
-  //       warning: '#ff9800',
-  //       info: '#00bcd4',
-  //       success: '#4caf50'
-  //       }
-  //     }
-  //   }
-  // },
+  theme: {
+    defaultTheme: savedTheme || 'openRepoLight',
+    themes: {
+      openRepoLight: {
+        dark: false,
+        colors: {
+          background: '#F5F5F5',
+          surface: '#FFFFFF',
+          primary: '#3B6CB7',
+          secondary: '#4E8A7B',
+          accent: '#7E6B9E',
+          error: '#C94A4A',
+          info: '#3686B3',
+          success: '#4A8C6A',
+          warning: '#BD863C',
+        }
+      },
+      openRepoDark: {
+        dark: true,
+        colors: {
+          background: '#121212',
+          surface: '#1E1E1E',
+          primary: '#7BA3D4',
+          secondary: '#7DB8A8',
+          accent: '#B09FD4',
+          error: '#D46969',
+          info: '#5D99C4',
+          success: '#6DAE89',
+          warning: '#CCA04A',
+        }
+      }
+    }
+  },
 })

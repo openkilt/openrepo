@@ -117,9 +117,9 @@
     },
     methods: {
         resetDialog() {
-            this.repo_uid = ''
-            this.repo_type = 'deb'
-            this.signing_key = ''
+            this.repo.repo_uid = ''
+            this.repo.repo_type = 'deb'
+            this.repo.signing_key = ''
         },
         loadPgpKeys() {
             this.all_pgp_keys = []
@@ -139,6 +139,7 @@
                 logger.debug(response.data);
             })
             .catch(e => {
+                console.error('Failed to load PGP keys:', e);
                 logger.debug(e);
             });
         },

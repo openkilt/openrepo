@@ -1,35 +1,23 @@
-<!--
- Copyright 2022 by Open Kilt LLC. All rights reserved.
- This file is part of the OpenRepo Repository Management Software (OpenRepo)
- OpenRepo is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License
- version 3 as published by the Free Software Foundation
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>.
--->
-
 <template>
   <v-app>
-
-    <NavBar />
-    <v-main>
-      <router-view />
-    </v-main>
+    <template v-if="auth_loading">
+      <v-main class="d-flex align-center justify-center" style="min-height: 100vh">
+        <v-progress-circular indeterminate color="primary"></v-progress-circular>
+      </v-main>
+    </template>
+    <template v-else>
+      <NavBar />
+      <v-main>
+        <router-view />
+      </v-main>
+    </template>
   </v-app>
 </template>
 
 <script lang="ts">
 import NavBar from '@/components/nav_bar.vue'
-import { defineComponent } from 'vue'
 import {logger} from '@/logger.ts'
 import UserDataService from '@/services/user_service'
-import { provide } from 'vue'
 
 export default {
   name: 'App',
@@ -39,6 +27,7 @@ export default {
   data() {
     return {
       user_info: {},
+      auth_loading: true,
     }
   },
     methods: {
@@ -48,6 +37,7 @@ export default {
         .then(response => {
               this.user_info = response.data;
               this.$store.commit('set_user', response.data);
+              this.auth_loading = false;
               logger.debug(this.user_info);
           })
           .catch(e => {
@@ -57,6 +47,10 @@ export default {
                 logger.info("User is not authenticated.  Redirecting to login page")
                 window.location.href = "/admin/login/?next=" + window.location.pathname;
               }
+              else
+              {
+                this.auth_loading = false;
+              }
           });
       }
   },
@@ -65,4 +59,4 @@ export default {
   }
 
 }
-</script> 
+</script>

@@ -37,16 +37,20 @@ class RepoDataService {
       return http.delete(`/${repo_uid}/`);
     }
 
-    upload(repo_uid: string, package_file: File, overwrite: false) {
-
+    upload(repo_uid: string, package_file: File, overwrite: boolean, onProgress?: (progressEvent: any) => void) {
       let data = new FormData();
       data.append("package_file", package_file);
       if (overwrite)
         data.append("overwrite", 'true');
 
-      return http.post(`/${repo_uid}/upload/`, data)
+      return http.post(`/${repo_uid}/upload/`, data, {
+        onUploadProgress: onProgress,
+      });
     }
-  
+
+    getUploadStatus(task_id: string) {
+      return http.get(`/upload-status/${task_id}/`);
+    }
   }
   
   export default new RepoDataService();

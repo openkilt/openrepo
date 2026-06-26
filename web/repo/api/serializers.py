@@ -123,6 +123,26 @@ class RepoDetailSerializer(serializers.HyperlinkedModelSerializer):
         if attrs["signing_key"] is None or attrs["signing_key"] == "":
             raise serializers.ValidationError({"signing_key": "Signing key is required"})
 
+        promote_to = attrs.get('promote_to')
+        if promote_to:
+            conflict = Repository.objects.filter(promote_to=promote_to)
+            if self.instance:
+                conflict = conflict.exclude(pk=self.instance.pk)
+            if conflict.exists():
+                raise serializers.ValidationError(
+                    {'promote_to': f"Repo '{promote_to.repo_uid}' is already the promotion target of '{conflict.first().repo_uid}'"}
+                )
+
+            # Prevent circular promotion chains
+            if self.instance:
+                current = promote_to
+                while current is not None:
+                    if current.pk == self.instance.pk:
+                        raise serializers.ValidationError(
+                            {'promote_to': f"Setting promote_to to '{promote_to.repo_uid}' would create a circular promotion chain"}
+                        )
+                    current = current.promote_to
+
         return attrs
 
 
@@ -167,6 +187,11 @@ class UploadSerializer(serializers.Serializer):
 
     class Meta:
         fields = ["package_file"]
+
+class UploadTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UploadTask
+        fields = ['id', 'status', 'filename', 'filesize', 'error_message', 'result_data', 'created_at', 'completed_at']
 
 
 class BuildSerializer(serializers.ModelSerializer):

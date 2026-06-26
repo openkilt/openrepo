@@ -41,9 +41,9 @@
 
                 <v-dialog v-model="dialog_instructions_api" max-width="800">
                     <template v-slot:activator="{ props }">
-                        <v-btn v-bind="props" variant="text" icon color="primary">
+                        <v-btn v-bind="props" variant="text" icon color="primary" aria-label="API usage instructions">
                             <v-icon>mdi-api</v-icon>
-                            <v-tooltip activator="parent" location="top">Repo Instruction</v-tooltip>
+                            <v-tooltip activator="parent" location="top">API Instructions</v-tooltip>
                         </v-btn>
                     </template>
                     <v-card>
@@ -61,7 +61,7 @@
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
-                            <v-btn color="green darken-1" @click="copyInstructionsToClipboard(this.instructions_api);" text>Copy to Clipboard</v-btn>
+                            <v-btn color="green darken-1" @click="copyInstructionsToClipboard(this.user_info.instructions_api);" text>Copy to Clipboard</v-btn>
                             <v-btn color="green darken-1" @click="dialog_instructions_api = false;" text>Close</v-btn>
                         </v-card-actions>
                     </v-card>
@@ -70,9 +70,9 @@
 
                 <v-dialog v-model="dialog_instructions_cli" max-width="800">
                     <template v-slot:activator="{ props }">
-                        <v-btn v-bind="props" variant="text" icon color="primary">
+                        <v-btn v-bind="props" variant="text" icon color="primary" aria-label="CLI usage instructions">
                             <v-icon>mdi-console</v-icon>
-                            <v-tooltip activator="parent" location="top">Repo Instruction</v-tooltip>
+                            <v-tooltip activator="parent" location="top">CLI Instructions</v-tooltip>
                         </v-btn>
                     </template>
                     <v-card>
@@ -142,7 +142,7 @@
           })
           .catch(e => {
               logger.debug(e);
-              show_global_error_msg = "Error retrieving user information";
+              this.show_global_error_msg = "Error retrieving user information";
 
           });
       },

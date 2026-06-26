@@ -31,6 +31,7 @@ class PGPSigningKey(models.Model):
     fingerprint = models.CharField(db_index=True, unique=True, max_length=65535)
     private_key_pem = models.CharField(max_length=65536)
     public_key_pem = models.CharField(max_length=65536)
+    passphrase = models.CharField(max_length=65536, blank=True, default='')
 
     creation_date = models.DateTimeField(auto_now_add=True, blank=True)
 
@@ -53,7 +54,7 @@ class Repository(models.Model):
     repo_type = models.CharField(max_length=128, choices=REPO_TYPES, db_index=True)
 
     signing_key = models.ForeignKey(PGPSigningKey, blank=True, null=True, on_delete=models.PROTECT)
-    promote_to = models.ForeignKey("self", blank=True, null=True, on_delete=models.CASCADE)
+    promote_to = models.OneToOneField("self", blank=True, null=True, on_delete=models.CASCADE)
 
     # When a newer package of the same name is uploaded, delete the older versions
     keep_only_latest = models.BooleanField(default=False)
@@ -111,11 +112,6 @@ class Package(models.Model):
         )
 
 
-class Mirror(models.Model):
-    # Don't allow the repo to be deleted without first deleting the mirror(s)
-    repo = models.ForeignKey(Repository, on_delete=models.PROTECT)
-
-
 class Build(models.Model):
     repo = models.ForeignKey(Repository, db_index=True, on_delete=models.CASCADE)
     build_number = models.BigIntegerField(db_index=True)
@@ -135,6 +131,8 @@ class Build(models.Model):
             (STATUS_COMPLETE_ERROR, "Failed"),
         ],
     )
+
+    total_duration_sec = models.FloatField(blank=True, null=True)
 
     class Meta:
         unique_together = (

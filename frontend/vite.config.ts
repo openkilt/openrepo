@@ -38,7 +38,7 @@ export default defineConfig({
       // For the dev server, route all backend requests (e.g., /api.*) to Django
       '^(/api-auth/|/api/|/admin/|/static/|/back/)': {
         target: 'http://localhost:8000',
-        changeOrigin: false,
+        changeOrigin: true,
       }
       
     }

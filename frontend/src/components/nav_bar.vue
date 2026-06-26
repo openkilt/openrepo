@@ -16,24 +16,32 @@
 
 <template>
     <nav>
-        <v-toolbar color="indigo-darken-4" flat app>
+        <v-toolbar flat app>
             <v-toolbar-title class="text-uppercase grey--text">
-                <!--<span class="font-weight-light">Open</span>
-                <span>Repo</span>-->
                 <span><router-link to="/"><v-img
-                    
+
                     width="120"
                     src="/assets/openrepo_logo.svg"
                 ></v-img></router-link></span>
             </v-toolbar-title>
             <v-spacer></v-spacer>
 
-            <span>{{username}}</span>
+            <v-btn
+              icon
+              @click="toggleTheme"
+              aria-label="Toggle dark mode"
+            >
+                <v-icon>{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
+                <v-tooltip activator="parent" location="top">{{ isDark ? 'Light mode' : 'Dark mode' }}</v-tooltip>
+            </v-btn>
+
+            <span class="mr-2">{{username}}</span>
             <v-menu>
                 <template v-slot:activator="{ props }">
                     <v-btn
                     v-bind="props"
                     icon
+                    aria-label="Navigation menu"
                     >
                         <v-icon>mdi-dots-vertical</v-icon>
                     </v-btn>
@@ -59,27 +67,40 @@
 </template>
 
 <script lang="ts">
+    import { useTheme } from 'vuetify'
     import { mapState } from 'vuex'
 
     export default {
-        data: () => ({
-            raw_items: [
-                { title: 'User Info', icon: 'mdi-account', to: '/cfg/userinfo/', for_superuser: false},
-                { title: 'System Admin', icon: 'mdi-database-cog-outline', href: "/admin/", for_superuser: true},
-                { title: 'Log Out', icon: 'mdi-exit-to-app', href: "/admin/logout/", for_superuser: false },
-            ],
-        }),
+        data() {
+            return {
+                theme: useTheme(),
+                raw_items: [
+                    { title: 'User Info', icon: 'mdi-account', to: '/cfg/userinfo/', for_superuser: false},
+                    { title: 'System Admin', icon: 'mdi-database-cog-outline', href: "/admin/", for_superuser: true},
+                    { title: 'Log Out', icon: 'mdi-exit-to-app', href: "/admin/logout/", for_superuser: false },
+                ],
+            };
+        },
         computed: {
             ...mapState({
                 username: 'username',
                 is_superuser: 'is_superuser'
             }),
+            isDark() {
+                return this.theme.global.name === 'openRepoDark';
+            },
             items() {
                 if (this.is_superuser)
                     return this.raw_items;
-                
-                // If the user is not a superuser, filter out those menu items
+
                 return this.raw_items.filter(it=>!it.for_superuser);
+            },
+        },
+        methods: {
+            toggleTheme() {
+                const name = this.isDark ? 'openRepoLight' : 'openRepoDark';
+                this.theme.global.name = name;
+                localStorage.setItem('openrepo_theme', name);
             },
         }
     }
